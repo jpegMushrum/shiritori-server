@@ -21,7 +21,11 @@ else()
     message(FATAL_ERROR "Boost not found")
 endif()
 
-add_executable(server src/main.cpp)
+add_executable(server main.cpp)
+add_subdirectory(network)
+add_subdirectory(game)
+add_subdirectory(repo)
 
 target_include_directories(server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(server PRIVATE ${Boost_LIBRARIES} ws2_32)
+target_link_libraries(server PRIVATE network)
