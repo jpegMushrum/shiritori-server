@@ -1,19 +1,49 @@
-#include <boost/asio.hpp>
 #include <iostream>
-#include "server.hpp"
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <memory>
 
-using boost::asio::ip::tcp;
+#include "info_service.hpp"
+#include "users_repo.hpp"
+#include "user_info.hpp"
+
+using ull = unsigned long long;
 
 int main() {
-    try {
-        boost::asio::io_context io;
-        Server server(io, 8080);
 
-        std::cout << "Server started on port 8080...\n";
+    UsersRepo usersRepo;
+    InfoService infoService(usersRepo);
 
-        server.startAccepting();
-    }
-    catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+    while (true) {
+        std::string in;
+        std::getline(std::cin, in);
+
+        std::stringstream ss(in);
+        std::string command;
+        std::getline(ss, command, ' ');
+    
+        std::vector<std::string> args;
+        std::string t;
+        while (std::getline(ss, t, ' ')) {
+            args.push_back(t);
+        }
+
+
+        if (command == "getUser") {
+            try {
+                ull id = std::stoull(args[0]);
+                UserInfo result = infoService.getUserInfo(id);
+                std::cout << result << "\n";
+            }
+            catch (...) {
+                std::cerr << "getPlayer err: bad args";    
+            }
+            
+            continue;
+        }
+
+        std::cerr << "main err: Unknown command\n";
     }
 }
