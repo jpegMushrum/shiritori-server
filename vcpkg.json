@@ -1,0 +1,8 @@
+{
+  "name": "shiritori-cpp",
+  "version": "0.1.0",
+  "dependencies": [
+    "curl",
+    "nlohmann-json"
+  ]
+}

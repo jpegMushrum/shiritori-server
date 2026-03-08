@@ -8,14 +8,20 @@
 #include "games_controller.hpp"
 #include "info_controller.hpp"
 #include "info_service.hpp"
+#include "jisho.hpp"
 #include "task_queue.hpp"
 #include "user_info.hpp"
 #include "users_repo.hpp"
+#include <windows.h>
 
 using ull = unsigned long long;
 
 int main()
 {
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+
+    auto dict = JishoDict();
     auto usersRepo = std::make_shared<UsersRepo>();
     auto gamesRepo = std::make_shared<GamesRepo>();
     auto infoService = std::make_unique<InfoService>(usersRepo, gamesRepo);
@@ -93,6 +99,29 @@ int main()
             catch (...)
             {
                 std::cerr << "startNewGame err: bad args\n";
+            }
+
+            continue;
+        }
+
+        if (command == "searchWord")
+        {
+            try
+            {
+                if (args.empty())
+                {
+                    std::cerr << "searchWord err: no args\n";
+                    continue;
+                }
+
+                std::string word = args[0];
+                std::cout << "dmain| " << word << '\n';
+
+                dict.SearchWord(word);
+            }
+            catch (...)
+            {
+                std::cerr << "searchWord err: bad args\n";
             }
 
             continue;

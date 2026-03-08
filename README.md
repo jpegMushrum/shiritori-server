@@ -48,7 +48,12 @@ Client is an app, written with usage of QT. Client has 4 screens
 Providing info about players.
 Provides info about live games.
 Handling several active games at once.
-Using [Japanese–Multilingual Dictionary](https://gitlab.com/yamagoya/jmdictdb) to verify words.
+
+>[!NOTE]
+>I wanted to Use [Japanese–Multilingual Dictionary](https://gitlab.com/yamagoya/jmdictdb) to verify words, but faced problems setting it up.
+>I came up to use [jisho](jisho.org) open API.
+
+
 
 1. UTF-8 Kana decoding
 2. Comparing words 
