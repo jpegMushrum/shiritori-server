@@ -21,13 +21,13 @@ class GameSession
     HandleWordStatus handleWord(ull, const std::string&);
 
     GameInfo GetInfo();
-    GameSession(ull, std::shared_ptr<JishoDict>);
+    GameSession(ull, std::shared_ptr<IDictionary>);
 
   private:
     std::unordered_set<ull> players_;
     std::vector<Word> words_;
 
-    std::shared_ptr<JishoDict> dict_;
+    std::shared_ptr<IDictionary> dict_;
 
     std::mutex mu_;
     GameInfo info_;

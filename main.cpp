@@ -8,6 +8,7 @@
 
 #include "game_fabric.hpp"
 #include "games_controller.hpp"
+#include "idictionary.hpp"
 #include "info_controller.hpp"
 #include "info_service.hpp"
 #include "jisho.hpp"
@@ -19,7 +20,6 @@ using ull = unsigned long long;
 
 int main()
 {
-    std::cout << "D|!\n";
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 

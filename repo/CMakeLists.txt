@@ -5,6 +5,7 @@ add_library(repo STATIC
     models/user.cpp
     models/game.cpp
     models/word.cpp
+    idictionary.cpp
 )
 
 target_include_directories(repo PUBLIC

@@ -5,11 +5,6 @@
 
 using json = nlohmann::json;
 
-JishoDict::JishoDict()
-{
-    std::cout << "jisho created\n";
-}
-
 size_t JishoDict::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
     size_t totalSize = size * nmemb;
