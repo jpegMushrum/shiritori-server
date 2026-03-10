@@ -9,7 +9,15 @@ UserInfo Mapper::UserToDto(User user)
     return UserInfo(user.id, user.nickname, user.games, user.words);
 }
 
-GameInfo Mapper::GameToDto(Game game)
+GameInfo Mapper::GameToDto(std::vector<Game> gameParts)
 {
-    return GameInfo(game.id, 0, 0, 16);
+    int wordsCount = 0, playersCount = 0;
+    ull id = gameParts[0].gameId;
+    for (auto game : gameParts)
+    {
+        wordsCount += game.words;
+        playersCount++;
+    }
+
+    return GameInfo(id, playersCount, wordsCount);
 }

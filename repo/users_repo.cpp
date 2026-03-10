@@ -8,10 +8,10 @@ using ull = unsigned long long;
 
 UsersRepo::UsersRepo(std::string path) : dbPath_(path)
 {
-    initDb();
+    initTables();
 }
 
-void UsersRepo::initDb()
+void UsersRepo::initTables()
 {
     const std::string sql = R"(
             CREATE TABLE IF NOT EXISTS users (

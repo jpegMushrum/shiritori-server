@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "game.hpp"
 #include "game_info.hpp"
 #include "user.hpp"
@@ -11,5 +13,5 @@ class Mapper
     Mapper() = delete;
 
     static UserInfo UserToDto(User);
-    static GameInfo GameToDto(Game);
+    static GameInfo GameToDto(std::vector<Game>);
 };

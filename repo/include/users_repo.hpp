@@ -17,5 +17,5 @@ class UsersRepo
 
   private:
     std::string dbPath_;
-    void initDb();
+    void initTables();
 };

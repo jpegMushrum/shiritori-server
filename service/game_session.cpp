@@ -4,8 +4,7 @@
 
 using ull = unsigned long long;
 
-GameSession::GameSession(ull id, std::shared_ptr<IDictionary> dict)
-    : info_(id, 0, 0, 16), dict_(dict)
+GameSession::GameSession(ull id, std::shared_ptr<IDictionary> dict) : info_(id, 0, 0), dict_(dict)
 {
 }
 
