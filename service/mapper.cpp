@@ -6,7 +6,7 @@
 
 UserInfo Mapper::UserToDto(User user)
 {
-    return UserInfo(user.id, user.nickname, user.words_awg);
+    return UserInfo(user.id, user.nickname, user.games, user.words);
 }
 
 GameInfo Mapper::GameToDto(Game game)

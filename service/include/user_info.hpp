@@ -7,11 +7,12 @@ using ull = unsigned long long;
 class UserInfo
 {
   public:
-    UserInfo(ull, std::string, double);
+    UserInfo(ull, std::string, int, int);
 
     ull id;
     std::string nickname;
-    double words_awg;
+    int games;
+    int words;
 
     friend std::ostream& operator<<(std::ostream&, const UserInfo&);
 };

@@ -19,20 +19,31 @@
 
 using ull = unsigned long long;
 
+/*
+    Планы на сегодня:
+        - (Done) Исправить модель юзера на количество игр и кол-во слов вместо awg
+        - Сделать репозиторий игр
+        - Распарсить ответ от jisho
+        - Добавить игровую логику
+*/
+
 int main()
 {
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
-    std::string usersDbPath = (std::filesystem::current_path() / "data" / "usersDb.db").string();
+    std::string dbPath = (std::filesystem::current_path() / "data" / "shiritoriDb.db").string();
 
     auto jisho = std::make_shared<JishoDict>();
-    auto usersRepo = std::make_shared<UsersRepo>(usersDbPath);
+    std::cout << "d1| \n";
+    auto usersRepo = std::make_shared<UsersRepo>(dbPath);
+    std::cout << "d2| \n";
     auto gamesRepo = std::make_shared<GamesRepo>();
 
     auto infoService = std::make_unique<InfoService>(usersRepo, gamesRepo);
     auto gameFabric = std::make_unique<GameFabric>(jisho);
 
+    std::cout << "d3| \n";
     auto taskQueue = std::make_shared<TaskQueue>(std::thread::hardware_concurrency());
     InfoController infoCtr(taskQueue, std::move(infoService));
     GamesController gamesCtr(taskQueue, std::move(gameFabric));

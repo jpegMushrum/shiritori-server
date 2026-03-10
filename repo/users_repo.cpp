@@ -17,7 +17,8 @@ void UsersRepo::initDb()
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nickname TEXT NOT NULL,
-                words_awg REAL DEFAULT 0
+                games INTEGER DEFAULT 0,
+                words INTEGER DEFAULT 0
             );
         )";
 
@@ -48,7 +49,7 @@ User UsersRepo::getUser(ull id)
     sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
     sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nickname, words_awg FROM users WHERE id=?;", -1, &stmt,
+    sqlite3_prepare_v2(db, "SELECT id, nickname, games, words FROM users WHERE id=?;", -1, &stmt,
                        nullptr);
     sqlite3_bind_int(stmt, 1, id);
 
@@ -57,8 +58,9 @@ User UsersRepo::getUser(ull id)
     {
         ull id = sqlite3_column_int(stmt, 0);
         std::string nickname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        double words_awg = sqlite3_column_double(stmt, 2);
-        user = User(id, nickname, words_awg);
+        int games = sqlite3_column_int(stmt, 2);
+        int words = sqlite3_column_int(stmt, 3);
+        user = User(id, nickname, games, words);
     }
 
     sqlite3_finalize(stmt);
@@ -75,11 +77,9 @@ ull UsersRepo::addUser(User user)
     sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
     sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, "INSERT INTO users (nickname, words_awg) VALUES (?, ?)", -1, &stmt,
-                       nullptr);
+    sqlite3_prepare_v2(db, "INSERT INTO users (nickname) VALUES (?)", -1, &stmt, nullptr);
 
     sqlite3_bind_text(stmt, 1, user.nickname.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_double(stmt, 2, user.words_awg);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -104,11 +104,12 @@ void UsersRepo::changeUser(User user)
     sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
     sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, "UPDATE users SET nickname = ?, words_awg = ? WHERE id = ?", -1, &stmt,
-                       nullptr);
+    sqlite3_prepare_v2(db, "UPDATE users SET nickname = ?, games = ?, words = ? WHERE id = ?", -1,
+                       &stmt, nullptr);
     sqlite3_bind_text(stmt, 1, user.nickname.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_double(stmt, 2, user.words_awg);
-    sqlite3_bind_int(stmt, 3, user.id);
+    sqlite3_bind_int(stmt, 2, user.games);
+    sqlite3_bind_int(stmt, 3, user.words);
+    sqlite3_bind_int(stmt, 4, user.id);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
