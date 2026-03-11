@@ -20,18 +20,10 @@
 using ull = unsigned long long;
 
 /*
-    Планы на сегодня:
-        - (Done) Исправить модель юзера на количество игр и кол-во слов вместо awg
-        - (Done) Сделать репозиторий игр
-        - (Done) Распарсить ответ от jisho
-        - Добавить игровую логику
-*/
-
-/*
-    Что добавить еще:
-        - (Done) gameSession::endSession, чтобы записывал в gamesRepo результаты
-        - gameSession.admin для созранения создателя игры
-        - gameSession.lastPlayer для сохранения очередности
+    Ближайшие планы:
+        - (Done) stopGame, остановка и запись истории
+        - getGamesHistory -- получать историю игр по id
+        - (Done) getGameInfo -- получить контекст конкретной активной игры
 */
 
 int main()
@@ -116,7 +108,7 @@ int main()
         {
             try
             {
-                gamesCtr.GetActiveGames(
+                gamesCtr.getActiveGames(
                     [](std::vector<GameContext> gc)
                     {
                         for (int i = 0; i < gc.size(); i++)
@@ -128,6 +120,29 @@ int main()
             catch (...)
             {
                 std::cerr << "getActiveGames err: bad args\n";
+            }
+
+            continue;
+        }
+
+        if (command == "getGameInfo")
+        {
+
+            try
+            {
+                if (args.size() < 1)
+                {
+                    std::cerr << "searchWord err: bad args\n";
+                    continue;
+                }
+
+                ull gameId = std::stoull(args[0]);
+
+                gamesCtr.getGameInfo(gameId, [](GameContext gc) { std::cout << gc << "\n"; });
+            }
+            catch (...)
+            {
+                std::cerr << "getGameInfo err: bad args\n";
             }
 
             continue;
@@ -145,7 +160,30 @@ int main()
 
                 ull userId = std::stoull(args[0]);
 
-                gamesCtr.StartNewGame(userId, [](GameContext gc) { std::cout << gc << '\n'; });
+                gamesCtr.startNewGame(userId, [](GameContext gc) { std::cout << gc << '\n'; });
+            }
+            catch (...)
+            {
+                std::cerr << "startNewGame err: bad args\n";
+            }
+
+            continue;
+        }
+
+        if (command == "stopGame")
+        {
+            try
+            {
+                if (args.size() < 2)
+                {
+                    std::cerr << "searchWord err: bad args\n";
+                    continue;
+                }
+
+                ull gameId = std::stoull(args[0]);
+                ull userId = std::stoull(args[1]);
+
+                gamesCtr.stopGame(gameId, userId);
             }
             catch (...)
             {
@@ -168,7 +206,7 @@ int main()
                 ull userId = std::stoull(args[0]);
                 ull gameId = std::stoull(args[1]);
 
-                gamesCtr.AddPlayerToGame(userId, gameId);
+                gamesCtr.addPlayerToGame(userId, gameId);
             }
             catch (...)
             {
@@ -192,7 +230,7 @@ int main()
                 ull userId = std::stoull(args[1]);
                 std::string word = args[2];
 
-                gamesCtr.HandleWord(gameId, userId, word,
+                gamesCtr.handleWord(gameId, userId, word,
                                     [](HandleWordStatus status) { std::cout << status << '\n'; });
             }
             catch (...)

@@ -30,6 +30,7 @@ GameSession::GameSession(ull id, ull adminId, std::shared_ptr<IDictionary> dict,
 void GameSession::stopGame()
 {
     std::lock_guard lock(mu_);
+    std::cout << "d stop game|" << ctx_.id << '\n';
     stop_ = true;
 }
 
@@ -325,7 +326,6 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
         ctx_.lastKana = lastKana;
 
         ps.score++;
-
         ctx_.wordsCount++;
 
         players_.erase(it);

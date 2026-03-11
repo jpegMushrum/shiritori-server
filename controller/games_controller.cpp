@@ -6,17 +6,16 @@ GamesController::GamesController(std::shared_ptr<TaskQueue> taskQueue,
 {
 }
 
-void GamesController::StartNewGame(ull adminId, std::function<void(GameContext)> f)
+void GamesController::startNewGame(ull adminId, std::function<void(GameContext)> f)
 {
     taskQueue_->addTask(
         [this, adminId, f]()
         {
-            ull id;
             GameContext info;
             {
                 std::unique_lock lock(mu_);
 
-                id = nextGameId_++;
+                ull id = nextGameId_++;
 
                 activeGames_[id] = gameFabric_->createGame(id, adminId);
                 info = activeGames_[id]->GetInfo();
@@ -26,7 +25,30 @@ void GamesController::StartNewGame(ull adminId, std::function<void(GameContext)>
         });
 }
 
-void GamesController::HandleWord(ull gameId, ull userId, std::string word,
+void GamesController::stopGame(ull gameId, ull userId)
+{
+    taskQueue_->addTask(
+        [this, gameId, userId]()
+        {
+            std::unique_lock lock(mu_);
+
+            auto it = activeGames_.find(gameId);
+            if (it == activeGames_.end())
+            {
+                return;
+            }
+
+            std::cout << "d trying to stop game | " << it->second->GetInfo().adminId << " "
+                      << userId << '\n';
+            if (it->second->GetInfo().adminId == userId)
+            {
+                it->second->stopGame();
+                activeGames_.erase(it);
+            }
+        });
+}
+
+void GamesController::handleWord(ull gameId, ull userId, std::string word,
                                  std::function<void(HandleWordStatus)> f)
 {
     taskQueue_->addTask(
@@ -52,7 +74,7 @@ void GamesController::HandleWord(ull gameId, ull userId, std::string word,
         });
 }
 
-void GamesController::GetActiveGames(std::function<void(std::vector<GameContext>)> f)
+void GamesController::getActiveGames(std::function<void(std::vector<GameContext>)> f)
 {
     taskQueue_->addTask(
         [this, f]()
@@ -74,7 +96,29 @@ void GamesController::GetActiveGames(std::function<void(std::vector<GameContext>
         });
 }
 
-void GamesController::AddPlayerToGame(ull userId, ull gameId)
+void GamesController::getGameInfo(ull gameId, std::function<void(GameContext)> f)
+{
+    taskQueue_->addTask(
+        [this, gameId, f]()
+        {
+            GameContext info;
+            {
+                std::shared_lock lock(mu_);
+
+                auto it = activeGames_.find(gameId);
+                if (it == activeGames_.end())
+                {
+                    return;
+                }
+
+                info = it->second->GetInfo();
+            }
+
+            f(info);
+        });
+}
+
+void GamesController::addPlayerToGame(ull userId, ull gameId)
 {
     taskQueue_->addTask(
         [this, userId, gameId]()
