@@ -14,4 +14,5 @@ enum HandleWordStatus
     CANT_JOIN_WORDS,
     GAME_NOT_FOUND,
     GAME_STOPPED,
+    NO_FOUND_PLAYER,
 };

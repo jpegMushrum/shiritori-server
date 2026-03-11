@@ -2,5 +2,5 @@
 
 bool PlayerScore::psCmp(const PlayerScore& a, const PlayerScore& b)
 {
-    return a.score < b.score;
+    return a.score > b.score;
 }

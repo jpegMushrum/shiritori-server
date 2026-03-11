@@ -6,16 +6,16 @@ GamesController::GamesController(std::shared_ptr<TaskQueue> taskQueue,
 {
 }
 
-void GamesController::StartNewGame(std::function<void(ull)> f)
+void GamesController::StartNewGame(ull adminId, std::function<void(ull)> f)
 {
     taskQueue_->addTask(
-        [this, f]()
+        [this, adminId, f]()
         {
             std::unique_lock lock(mu_);
 
             ull id = nextGameId_++;
 
-            activeGames_[id] = gameFabric_->createGame(id);
+            activeGames_[id] = gameFabric_->createGame(id, adminId);
             lock.unlock();
 
             f(id);

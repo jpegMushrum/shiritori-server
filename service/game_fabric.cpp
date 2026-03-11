@@ -5,7 +5,7 @@ GameFabric::GameFabric(std::shared_ptr<IDictionary> dict, std::shared_ptr<GamesR
 {
 }
 
-std::shared_ptr<GameSession> GameFabric::createGame(ull gameId)
+std::shared_ptr<GameSession> GameFabric::createGame(ull gameId, ull adminId)
 {
-    return std::make_shared<GameSession>(gameId, dict_, repo_);
+    return std::make_shared<GameSession>(gameId, adminId, dict_, repo_);
 }

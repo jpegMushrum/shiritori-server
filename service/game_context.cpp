@@ -4,10 +4,10 @@
 
 using ull = unsigned long long;
 
-GameContext::GameContext() : id(0), wordsCount(0), playersCount(0) {}
+GameContext::GameContext() : id(0), wordsCount(0), playersCount(0), adminId(0), lastPlayerId(0) {}
 
-GameContext::GameContext(ull id, int wordsCount, int playersCount)
-    : id(id), wordsCount(wordsCount), playersCount(playersCount)
+GameContext::GameContext(ull id, int wordsCount, int playersCountm, ull adminId)
+    : id(id), wordsCount(wordsCount), playersCount(playersCount), adminId(adminId)
 {
 }
 

@@ -11,7 +11,7 @@ using ull = unsigned long long;
 class GameFabric
 {
   public:
-    std::shared_ptr<GameSession> createGame(ull);
+    std::shared_ptr<GameSession> createGame(ull, ull);
 
     GameFabric(std::shared_ptr<IDictionary>, std::shared_ptr<GamesRepo>);
 
