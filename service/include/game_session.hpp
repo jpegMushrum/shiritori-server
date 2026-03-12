@@ -25,7 +25,7 @@ using ull = unsigned long long;
 class GameSession : public IGameSession
 {
   public:
-    GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<GamesRepo>);
+    GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<IGamesRepo>);
     ~GameSession() override;
 
     void addUser(ull) override;
@@ -41,7 +41,7 @@ class GameSession : public IGameSession
     std::vector<Word> words_;
 
     std::shared_ptr<IDictionary> dict_;
-    std::shared_ptr<GamesRepo> repo_;
+    std::shared_ptr<IGamesRepo> repo_;
 
     bool stop_;
     std::mutex mu_;

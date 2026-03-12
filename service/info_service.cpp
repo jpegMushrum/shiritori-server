@@ -8,7 +8,8 @@
 
 using ull = unsigned long long;
 
-InfoService::InfoService(std::shared_ptr<UsersRepo> usersRepo, std::shared_ptr<GamesRepo> gamesRepo)
+InfoService::InfoService(std::shared_ptr<IUsersRepo> usersRepo,
+                         std::shared_ptr<IGamesRepo> gamesRepo)
     : usersRepo_(usersRepo), gamesRepo_(gamesRepo)
 {
 }

@@ -16,9 +16,9 @@ class InfoService : public IInfoService
     UserInfo getUserInfo(ull) override;
     ull addUser(const std::string&) override;
 
-    InfoService(std::shared_ptr<UsersRepo>, std::shared_ptr<GamesRepo>);
+    InfoService(std::shared_ptr<IUsersRepo>, std::shared_ptr<IGamesRepo>);
 
   private:
-    std::shared_ptr<UsersRepo> usersRepo_;
-    std::shared_ptr<GamesRepo> gamesRepo_;
+    std::shared_ptr<IUsersRepo> usersRepo_;
+    std::shared_ptr<IGamesRepo> gamesRepo_;
 };

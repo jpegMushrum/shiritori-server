@@ -2,18 +2,19 @@
 
 #include <string>
 
+#include "iusers_repo.hpp"
 #include "user.hpp"
 
 using ull = unsigned long long;
 
-class UsersRepo
+class UsersRepo : public IUsersRepo
 {
   public:
     UsersRepo(std::string);
 
-    ull addUser(User user);
-    void changeUser(User user);
-    User getUser(ull id);
+    ull addUser(User user) override;
+    void changeUser(User user) override;
+    User getUser(ull id) override;
 
   private:
     std::string dbPath_;

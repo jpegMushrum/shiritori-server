@@ -4,15 +4,16 @@
 #include <vector>
 
 #include "game.hpp"
+#include "igames_repo.hpp"
 
 using ull = unsigned long long;
 
-class GamesRepo
+class GamesRepo : public IGamesRepo
 {
   public:
     GamesRepo(std::string);
-    void putGame(std::vector<Game>);
-    std::vector<Game> getGameHistoryByUserId(ull);
+    void putGame(std::vector<Game>) override;
+    std::vector<Game> getGameHistoryByUserId(ull) override;
 
   private:
     std::string dbPath_;

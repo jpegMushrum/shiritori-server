@@ -21,7 +21,7 @@ char32_t getRandomKana()
 }
 
 GameSession::GameSession(ull id, ull adminId, std::shared_ptr<IDictionary> dict,
-                         std::shared_ptr<GamesRepo> repo)
+                         std::shared_ptr<IGamesRepo> repo)
     : dict_(dict), repo_(repo), stop_(false)
 {
     ctx_ = GameContext(id, 0, 0, adminId, getRandomKana());

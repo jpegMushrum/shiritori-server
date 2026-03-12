@@ -1,6 +1,6 @@
 #include "game_fabric.hpp"
 
-GameFabric::GameFabric(std::shared_ptr<IDictionary> dict, std::shared_ptr<GamesRepo> repo)
+GameFabric::GameFabric(std::shared_ptr<IDictionary> dict, std::shared_ptr<IGamesRepo> repo)
     : dict_(dict), repo_(repo)
 {
 }
