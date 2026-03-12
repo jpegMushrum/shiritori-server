@@ -3,3 +3,4 @@ build
 .clang-format
 CMakeUserPresets.json
 vcpkg_installed
+data

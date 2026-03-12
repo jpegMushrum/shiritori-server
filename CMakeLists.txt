@@ -24,8 +24,7 @@ add_subdirectory(network)
 add_subdirectory(service)
 add_subdirectory(repo)
 add_subdirectory(controller)
-
-target_include_directories(server PRIVATE Boost::headers ws2_32)
+add_subdirectory(tests)
 
 target_link_libraries(server PRIVATE controller)
 target_link_libraries(server PRIVATE service)

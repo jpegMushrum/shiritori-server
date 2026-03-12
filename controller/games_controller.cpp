@@ -1,7 +1,7 @@
 #include "games_controller.hpp"
 
 GamesController::GamesController(std::shared_ptr<TaskQueue> taskQueue,
-                                 std::unique_ptr<GameFabric> gameFabric)
+                                 std::unique_ptr<IGameFabric> gameFabric)
     : taskQueue_(taskQueue), nextGameId_(0), gameFabric_(std::move(gameFabric))
 {
 }
@@ -54,7 +54,7 @@ void GamesController::handleWord(ull gameId, ull userId, std::string word,
     taskQueue_->addTask(
         [this, gameId, userId, word, f]()
         {
-            std::shared_ptr<GameSession> game;
+            std::shared_ptr<IGameSession> game;
 
             {
                 std::shared_lock lock(mu_);

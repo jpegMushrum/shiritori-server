@@ -5,6 +5,7 @@
     "boost",
     "curl",
     "nlohmann-json",
-    "sqlite3"
+    "sqlite3",
+    "gtest"
   ]
 }

@@ -14,6 +14,7 @@
 #include "game_context.hpp"
 #include "games_repo.hpp"
 #include "handle_word_status.hpp"
+#include "igame_session.hpp"
 #include "jisho.hpp"
 #include "player_score.hpp"
 #include "user.hpp"
@@ -21,17 +22,17 @@
 
 using ull = unsigned long long;
 
-class GameSession
+class GameSession : public IGameSession
 {
   public:
     GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<GamesRepo>);
-    ~GameSession();
+    ~GameSession() override;
 
-    void addUser(ull);
-    HandleWordStatus handleWord(ull, const std::string&);
-    void stopGame();
+    void addUser(ull) override;
+    HandleWordStatus handleWord(ull, const std::string&) override;
+    void stopGame() override;
 
-    GameContext GetInfo();
+    GameContext GetInfo() override;
 
   private:
     void saveStats();

@@ -19,13 +19,6 @@
 
 using ull = unsigned long long;
 
-/*
-    Ближайшие планы:
-        - (Done) stopGame, остановка и запись истории
-        - getGamesHistory -- получать историю игр по id
-        - (Done) getGameInfo -- получить контекст конкретной активной игры
-*/
-
 int main()
 {
     SetConsoleCP(CP_UTF8);

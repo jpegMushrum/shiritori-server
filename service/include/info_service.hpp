@@ -4,16 +4,17 @@
 #include <vector>
 
 #include "games_repo.hpp"
+#include "iinfo_service.hpp"
 #include "user_info.hpp"
 #include "users_repo.hpp"
 
 using ull = unsigned long long;
 
-class InfoService
+class InfoService : public IInfoService
 {
   public:
-    UserInfo getUserInfo(ull);
-    ull addUser(const std::string&);
+    UserInfo getUserInfo(ull) override;
+    ull addUser(const std::string&) override;
 
     InfoService(std::shared_ptr<UsersRepo>, std::shared_ptr<GamesRepo>);
 

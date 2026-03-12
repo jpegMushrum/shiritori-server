@@ -1,7 +1,7 @@
 #include "info_controller.hpp"
 
 InfoController::InfoController(std::shared_ptr<TaskQueue> queue,
-                               std::unique_ptr<InfoService> infoService)
+                               std::unique_ptr<IInfoService> infoService)
     : taskQueue_(queue), infoService_(std::move(infoService))
 {
 }
