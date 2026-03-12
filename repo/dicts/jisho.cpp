@@ -11,7 +11,7 @@ size_t JishoDict::WriteCallback(void* contents, size_t size, size_t nmemb, void*
     return totalSize;
 }
 
-std::vector<Word> JishoDict::SearchWord(const std::string& word)
+std::vector<Word> JishoDict::searchWord(const std::string& word)
 {
     CURL* curl = curl_easy_init();
     if (!curl)

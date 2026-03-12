@@ -3,6 +3,7 @@ enable_testing()
 add_executable(tests
     sanity_test.cpp
     controller_test.cpp
+    service_test.cpp
 )
 
 find_package(GTest CONFIG REQUIRED)

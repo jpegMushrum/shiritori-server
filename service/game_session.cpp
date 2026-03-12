@@ -2,35 +2,16 @@
 
 using ull = unsigned long long;
 
-char32_t getRandomKana()
-{
-    static const std::vector<char32_t> allowedHiragana = {
-        U'あ', U'い', U'う', U'え', U'お', U'か', U'き', U'く', U'け', U'こ', U'さ', U'し',
-        U'す', U'せ', U'そ', U'た', U'ち', U'つ', U'て', U'と', U'な', U'に', U'ぬ', U'ね',
-        U'の', U'は', U'ひ', U'ふ', U'へ', U'ほ', U'ま', U'み', U'む', U'め', U'も', U'や',
-        U'ゆ', U'よ', U'ら', U'り', U'る', U'れ', U'ろ', U'わ', U'が', U'ぎ', U'ぐ', U'げ',
-        U'ご', U'ざ', U'じ', U'ず', U'ぜ', U'ぞ', U'だ', U'で', U'ど', U'ば', U'び', U'ぶ',
-        U'べ', U'ぼ', U'ぱ', U'ぴ', U'ぷ', U'ぺ', U'ぽ',
-    };
-
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(0, allowedHiragana.size() - 1);
-
-    return allowedHiragana[dist(gen)];
-}
-
 GameSession::GameSession(ull id, ull adminId, std::shared_ptr<IDictionary> dict,
-                         std::shared_ptr<IGamesRepo> repo)
+                         std::shared_ptr<IGamesRepo> repo, char32_t startKana)
     : dict_(dict), repo_(repo), stop_(false)
 {
-    ctx_ = GameContext(id, 0, 0, adminId, getRandomKana());
+    ctx_ = GameContext(id, 0, 0, adminId, startKana);
 }
 
 void GameSession::stopGame()
 {
     std::lock_guard lock(mu_);
-    std::cout << "d stop game|" << ctx_.id << '\n';
     stop_ = true;
 }
 
@@ -244,7 +225,7 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
     std::vector<Word> response;
     try
     {
-        response = dict_->SearchWord(word);
+        response = dict_->searchWord(word);
     }
     catch (const std::exception& e)
     {
@@ -282,18 +263,6 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
             return HandleWordStatus::NO_FOUND_WORD;
         }
         Word wordInfo = *relevantWord;
-
-        std::cout << "d relw_\n" << wordInfo.kanji << "\n";
-        for (auto& r : wordInfo.readings)
-        {
-            std::cout << r << " ";
-        }
-        std::cout << '\n';
-        for (auto& pos : wordInfo.partsOfSpeach)
-        {
-            std::cout << pos << " ";
-        }
-        std::cout << '\n';
 
         if (!wordInfo.partsOfSpeach.contains("Noun"))
         {

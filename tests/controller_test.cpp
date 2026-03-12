@@ -33,14 +33,14 @@ class InfoControllerTest : public ::testing::Test
     {
         taskQueue = std::make_shared<TaskQueue>(1);
 
-        mockService = new MockInfoService();
+        infoService = new MockInfoService();
 
         controller =
-            std::make_unique<InfoController>(taskQueue, std::unique_ptr<IInfoService>(mockService));
+            std::make_unique<InfoController>(taskQueue, std::unique_ptr<IInfoService>(infoService));
     }
 
     std::shared_ptr<TaskQueue> taskQueue;
-    MockInfoService* mockService;
+    MockInfoService* infoService;
     std::unique_ptr<InfoController> controller;
 };
 
@@ -48,7 +48,7 @@ TEST_F(InfoControllerTest, GetUserInfoCallsServiceAndReturnsResult)
 {
     UserInfo expected(42, "a", 42, 42);
 
-    EXPECT_CALL(*mockService, getUserInfo(42)).Times(1).WillOnce(Return(expected));
+    EXPECT_CALL(*infoService, getUserInfo(42)).Times(1).WillOnce(Return(expected));
 
     std::promise<UserInfo> promise;
     auto future = promise.get_future();
@@ -65,7 +65,7 @@ TEST_F(InfoControllerTest, GetUserInfoCallsServiceAndReturnsResult)
 
 TEST_F(InfoControllerTest, AddUserCallsServiceAndReturnsId)
 {
-    EXPECT_CALL(*mockService, addUser("Alice")).Times(1).WillOnce(Return(100));
+    EXPECT_CALL(*infoService, addUser("Alice")).Times(1).WillOnce(Return(100));
 
     std::promise<ull> promise;
     auto future = promise.get_future();

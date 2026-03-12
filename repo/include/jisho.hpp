@@ -12,7 +12,7 @@ using json = nlohmann::json;
 class JishoDict : public IDictionary
 {
   public:
-    std::vector<Word> SearchWord(const std::string&) override;
+    std::vector<Word> searchWord(const std::string&) override;
 
   private:
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);

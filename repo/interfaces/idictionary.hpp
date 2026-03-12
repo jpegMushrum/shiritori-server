@@ -9,5 +9,5 @@ class IDictionary
 {
   public:
     virtual ~IDictionary() = default;
-    virtual std::vector<Word> SearchWord(const std::string&) = 0;
+    virtual std::vector<Word> searchWord(const std::string&) = 0;
 };

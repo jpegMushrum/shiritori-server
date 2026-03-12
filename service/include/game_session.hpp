@@ -25,7 +25,7 @@ using ull = unsigned long long;
 class GameSession : public IGameSession
 {
   public:
-    GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<IGamesRepo>);
+    GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<IGamesRepo>, char32_t);
     ~GameSession() override;
 
     void addUser(ull) override;
