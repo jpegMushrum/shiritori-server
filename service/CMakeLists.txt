@@ -17,6 +17,10 @@ add_library(service STATIC
 target_include_directories(service PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/interfaces
+    ${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(service PUBLIC repo)
+target_link_libraries(service PUBLIC 
+    repo 
+    ${Boost_LIBRARIES}    
+)

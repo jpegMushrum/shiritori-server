@@ -6,3 +6,9 @@ GameInfo::GameInfo(ull gameId, ull userId, int words, int place)
     : gameId(gameId), userId(userId), words(words), place(place)
 {
 }
+
+std::ostream& operator<<(std::ostream& out, const GameInfo& gi)
+{
+    out << gi.gameId << " " << gi.userId << " " << gi.words << " " << gi.place;
+    return out;
+}

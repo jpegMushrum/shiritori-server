@@ -1,39 +1,30 @@
-#include <boost/asio.hpp>
-#include <iostream>
 #include "server.hpp"
 
 using tcp = boost::asio::ip::tcp;
 
-Server::Server(boost::asio::io_context& ioContext, unsigned short port)
-    : ioContext_(ioContext),
-    acceptor_(ioContext, tcp::endpoint(tcp::v4(), port))
+Server::Server(boost::asio::io_context& ioContext, unsigned short port,
+               std::shared_ptr<IInfoController> infoCtr, std::shared_ptr<IGamesController> gamesCtr)
+    : ioContext_(ioContext), acceptor_(ioContext, tcp::endpoint(tcp::v4(), port)),
+      infoCtr_(infoCtr), gamesCtr_(gamesCtr)
 {
 }
 
 void Server::startAccepting()
 {
-    while (true)
-    {
-        tcp::socket socket(ioContext_);
-        acceptor_.accept(socket);
-
-        std::thread(&Server::clientSession, this, std::move(socket)).detach();
-    }
+    doAccept();
+    ioContext_.run();
 }
 
-void Server::clientSession(tcp::socket socket)
+void Server::doAccept()
 {
-    try {
-        while (true)
+    acceptor_.async_accept(
+        [this](boost::system::error_code ec, tcp::socket socket)
         {
-            char data[512];
-            size_t len = socket.read_some(boost::asio::buffer(data));
+            if (!ec)
+            {
+                std::make_shared<Session>(std::move(socket), infoCtr_, gamesCtr_)->start();
+            }
 
-            if (len > 0)
-                boost::asio::write(socket, boost::asio::buffer("ok", 2));
-        }
-    }
-    catch (...)
-    {
-    }
+            doAccept();
+        });
 }

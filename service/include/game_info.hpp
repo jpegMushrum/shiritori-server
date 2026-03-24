@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 using ull = unsigned long long;
 
 class GameInfo
@@ -12,4 +14,6 @@ class GameInfo
     ull userId;
     int words;
     int place;
+
+    friend std::ostream& operator<<(std::ostream&, const GameInfo&);
 };
