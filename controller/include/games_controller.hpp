@@ -12,21 +12,22 @@
 #include "handle_word_status.hpp"
 #include "igame_fabric.hpp"
 #include "igame_session.hpp"
+#include "igames_controller.hpp"
 #include "task_queue.hpp"
 
 using ull = unsigned long long;
 
-class GamesController
+class GamesController : public IGamesController
 {
   public:
     GamesController(std::shared_ptr<TaskQueue>, std::unique_ptr<IGameFabric>);
 
-    void startNewGame(ull, std::function<void(GameContext)>);
-    void handleWord(ull, ull, std::string, std::function<void(HandleWordStatus)>);
-    void getActiveGames(std::function<void(std::vector<GameContext>)>);
-    void addPlayerToGame(ull, ull);
-    void stopGame(ull, ull);
-    void getGameInfo(ull, std::function<void(GameContext)>);
+    void startNewGame(ull, std::function<void(GameContext)>) override;
+    void handleWord(ull, ull, std::string, std::function<void(HandleWordStatus)>) override;
+    void getActiveGames(std::function<void(std::vector<GameContext>)>) override;
+    void addPlayerToGame(ull, ull) override;
+    void stopGame(ull, ull) override;
+    void getGameInfo(ull, std::function<void(GameContext)>) override;
 
   private:
     std::unordered_map<ull, std::shared_ptr<IGameSession>> activeGames_;

@@ -7,12 +7,14 @@
 #include <queue>
 #include <thread>
 
-class TaskQueue
+#include "itask_queue.hpp"
+
+class TaskQueue : public ITaskQueue
 {
   public:
     TaskQueue(unsigned int);
     ~TaskQueue();
-    void addTask(std::function<void()>);
+    void addTask(std::function<void()>) override;
 
   private:
     void startWorkerLoop();
