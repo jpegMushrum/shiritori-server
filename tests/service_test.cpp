@@ -70,7 +70,7 @@ TEST_F(GameSessionTest, HandleWordValidWord)
 
     Word word;
     word.partsOfSpeach.insert("Noun");
-    word.readings.insert("ねこ");
+    word.readings.emplace_back("ねこ");
 
     std::vector<Word> dictResult{word};
 
@@ -105,7 +105,7 @@ TEST_F(GameSessionTest, HandleWordNoSpeachPart)
 
     Word word;
     word.partsOfSpeach.insert("Verb");
-    word.readings.insert("ねる");
+    word.readings.emplace_back("ねる");
 
     std::vector<Word> dictResult{word};
 
@@ -135,7 +135,7 @@ TEST_F(GameSessionTest, HandleWordGotEndWord)
 
     Word word;
     word.partsOfSpeach.insert("Noun");
-    word.readings.insert("ねん");
+    word.readings.emplace_back("ねん");
 
     std::vector<Word> dictResult{word};
 
@@ -153,7 +153,7 @@ TEST_F(GameSessionTest, HandleWordGotDoubledWord)
     Word word;
     word.kanji = "ねこ";
     word.partsOfSpeach.insert("Noun");
-    word.readings.insert("ねこ");
+    word.readings.emplace_back("ねこ");
 
     std::vector<Word> dictResult{word};
 
@@ -175,7 +175,7 @@ TEST_F(GameSessionTest, HandleWordCantJoinWords)
     Word word;
     word.kanji = "ねこ";
     word.partsOfSpeach.insert("Noun");
-    word.readings.insert("ねこ");
+    word.readings.emplace_back("ねこ");
 
     std::vector<Word> dictResult{word};
 
@@ -188,7 +188,7 @@ TEST_F(GameSessionTest, HandleWordCantJoinWords)
     Word wrongWord;
     wrongWord.kanji = "あかい";
     wrongWord.partsOfSpeach.insert("Noun");
-    wrongWord.readings.insert("あかい");
+    wrongWord.readings.emplace_back("あかい");
 
     std::vector<Word> dictResult2{wrongWord};
 
@@ -227,7 +227,7 @@ TEST_F(GameSessionTest, HandleWordSuccessfulSequence)
     Word word1;
     word1.kanji = "ねこ";
     word1.partsOfSpeach.insert("Noun");
-    word1.readings.insert("ねこ");
+    word1.readings.emplace_back("ねこ");
 
     std::vector<Word> dictResult1{word1};
 
@@ -239,7 +239,7 @@ TEST_F(GameSessionTest, HandleWordSuccessfulSequence)
     Word word2;
     word2.kanji = "公園";
     word2.partsOfSpeach.insert("Noun");
-    word2.readings.insert("こうえん");
+    word2.readings.emplace_back("こうえん");
 
     std::vector<Word> dictResult2{word2};
 

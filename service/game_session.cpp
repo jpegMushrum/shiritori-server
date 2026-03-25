@@ -68,23 +68,56 @@ std::optional<Word> findRelevantWord(const std::string& word, const std::vector<
 {
     for (auto& w : wordsList)
     {
-        if ((w.kanji == word || w.readings.contains(word)) &&
-            w.readings.begin() != w.readings.end())
+        if (w.readings.begin() == w.readings.end())
+        {
+            continue;
+        }
+
+        if (w.kanji == word)
         {
             return w;
+        }
+
+        for (auto it = w.readings.begin(); it != w.readings.end(); it++)
+        {
+            if (*it == word)
+            {
+                return w;
+            }
         }
     }
 
     return std::nullopt;
 }
 
+std::string findRelevantReading(const std::string& word, std::vector<std::string> readings)
+{
+    for (auto& w : readings)
+    {
+        if (w == word)
+        {
+            return w;
+        }
+    }
+
+    return *readings.begin();
+}
+
 bool isWordDoubled(const std::string& word, const std::vector<Word>& usedWords)
 {
     for (auto& usedWord : usedWords)
     {
-        if (usedWord.kanji == word || usedWord.readings.contains(word))
+        if (usedWord.kanji == word)
         {
             return true;
+        }
+
+        for (auto& reading : usedWord.readings)
+        {
+            if (reading == word)
+            {
+                return true;
+            }
         }
     }
 
@@ -269,7 +302,12 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
             return HandleWordStatus::NO_SPEACH_PART;
         }
 
-        auto reading = conv_utf8_to_utf32(*wordInfo.readings.begin());
+        auto reading = conv_utf8_to_utf32(findRelevantReading(word, wordInfo.readings));
+        if (reading == U"")
+        {
+            return HandleWordStatus::CANT_JOIN_WORDS;
+        }
+
         std::optional<char32_t> lastKanaOpt = getLastKana(reading);
         std::optional<char32_t> firstKana = getFirstKana(reading);
         if (!lastKanaOpt)

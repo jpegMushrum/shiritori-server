@@ -67,7 +67,7 @@ std::vector<Word> JishoDict::jsonToWords(json& obj)
 
             if (jp.contains("reading"))
             {
-                word.readings.emplace(jp["reading"]);
+                word.readings.emplace_back(jp["reading"]);
             }
         }
 

@@ -2,6 +2,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 
 class Word
 {
@@ -9,7 +10,7 @@ class Word
     Word();
 
     std::string kanji;
-    std::set<std::string> readings;
+    std::vector<std::string> readings;
     std::set<std::string> partsOfSpeach;
 
     std::string meaning;

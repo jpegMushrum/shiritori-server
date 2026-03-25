@@ -221,6 +221,44 @@ void Router::parseAndAnswer(std::string querry)
         return;
     }
 
+    if (command == "getGamesHistory")
+    {
+        try
+        {
+            if (args.size() < 1)
+            {
+                writeCb_("Error: handleWord requires game ID, user ID, and word");
+                return;
+            }
+
+            ull userId = std::stoull(args[0]);
+
+            auto writeCb = writeCb_;
+            infoCtr_->getGamesHistory(userId,
+                                      [writeCb](std::vector<GameInfo> gi)
+                                      {
+                                          std::string ans = "";
+                                          for (int i = 0; i < gi.size(); i++)
+                                          {
+                                              ans += Router::giToString(gi[i]) + ";";
+                                          }
+
+                                          if (!ans.empty())
+                                          {
+                                              ans.pop_back();
+                                          }
+
+                                          writeCb(ans);
+                                      });
+        }
+        catch (...)
+        {
+            writeCb_("Error: invalid arguments for handleWord");
+        }
+
+        return;
+    }
+
     writeCb_("Error: Unknown command");
 }
 

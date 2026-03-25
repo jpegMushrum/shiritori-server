@@ -68,6 +68,18 @@ void GamesController::handleWord(ull gameId, ull userId, std::string word,
             }
 
             HandleWordStatus status = game->handleWord(userId, word);
+
+            if (status == HandleWordStatus::GOT_END_WORD)
+            {
+                std::unique_lock lock(mu_);
+
+                auto it = activeGames_.find(gameId);
+                if (it != activeGames_.end())
+                {
+                    activeGames_.erase(it);
+                }
+            }
+
             f(status);
         });
 }
