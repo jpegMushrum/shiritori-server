@@ -1,6 +1,6 @@
 #include "games_controller.hpp"
 
-GamesController::GamesController(std::shared_ptr<TaskQueue> taskQueue,
+GamesController::GamesController(std::shared_ptr<ITaskQueue> taskQueue,
                                  std::unique_ptr<IGameFabric> gameFabric)
     : taskQueue_(taskQueue), nextGameId_(0), gameFabric_(std::move(gameFabric))
 {

@@ -3,7 +3,6 @@ project(shiritori_cpp)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_compile_options(/EHsc)
 
 add_definitions(-DPROJECT_ROOT_DIR="${CMAKE_SOURCE_DIR}")
 add_definitions(-DBOOST_DATE_TIME_NO_LIB)

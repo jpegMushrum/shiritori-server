@@ -6,6 +6,7 @@ add_executable(tests
     service_test.cpp
     repo_test.cpp
     network_test.cpp
+    full_server_test.cpp
 )
 
 find_package(GTest CONFIG REQUIRED)

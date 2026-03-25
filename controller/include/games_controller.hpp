@@ -20,7 +20,7 @@ using ull = unsigned long long;
 class GamesController : public IGamesController
 {
   public:
-    GamesController(std::shared_ptr<TaskQueue>, std::unique_ptr<IGameFabric>);
+    GamesController(std::shared_ptr<ITaskQueue>, std::unique_ptr<IGameFabric>);
 
     void startNewGame(ull, std::function<void(GameContext)>) override;
     void handleWord(ull, ull, std::string, std::function<void(HandleWordStatus)>) override;
@@ -31,7 +31,7 @@ class GamesController : public IGamesController
 
   private:
     std::unordered_map<ull, std::shared_ptr<IGameSession>> activeGames_;
-    std::shared_ptr<TaskQueue> taskQueue_;
+    std::shared_ptr<ITaskQueue> taskQueue_;
     std::unique_ptr<IGameFabric> gameFabric_;
     ull nextGameId_;
 

@@ -72,15 +72,23 @@ ull UsersRepo::addUser(User user)
     sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
     sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db, "INSERT INTO users (nickname) VALUES (?)", -1, &stmt, nullptr);
+    const char* errMsg = nullptr;
+    if (sqlite3_prepare_v2(db, "INSERT INTO users (nickname) VALUES (?)", -1, &stmt, &errMsg) !=
+        SQLITE_OK)
+    {
+        std::string err = errMsg ? errMsg : "Failed to prepare statement";
+        sqlite3_close(db);
+        throw std::runtime_error("Insert failed 1: " + err);
+    }
 
     sqlite3_bind_text(stmt, 1, user.nickname.c_str(), -1, SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
+        std::string err = sqlite3_errmsg(db);
         sqlite3_finalize(stmt);
         sqlite3_close(db);
-        throw std::runtime_error("Insert failed");
+        throw std::runtime_error("Insert failed 2: " + err);
     }
     ull lastId = (ull)sqlite3_last_insert_rowid(db);
 

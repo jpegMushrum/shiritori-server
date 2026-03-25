@@ -14,7 +14,7 @@ using ull = unsigned long long;
 class InfoController : public IInfoController
 {
   public:
-    InfoController(std::shared_ptr<TaskQueue>, std::unique_ptr<IInfoService>);
+    InfoController(std::shared_ptr<ITaskQueue>, std::unique_ptr<IInfoService>);
 
     void getUserInfo(ull, std::function<void(UserInfo)>) override;
     void addUser(const std::string&, std::function<void(ull)>) override;
@@ -22,6 +22,6 @@ class InfoController : public IInfoController
     void getGamesHistory(ull, std::function<void(std::vector<GameInfo>)>) override;
 
   private:
-    std::shared_ptr<TaskQueue> taskQueue_;
+    std::shared_ptr<ITaskQueue> taskQueue_;
     std::unique_ptr<IInfoService> infoService_;
 };

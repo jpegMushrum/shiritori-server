@@ -70,7 +70,7 @@ TEST_F(RouterTest, GetUserSuccessfully)
         .WillOnce(Invoke([expectedUser](ull id, std::function<void(UserInfo)> callback)
                          { callback(expectedUser); }));
 
-    router->parseAndAnswer("getUser 42");
+    router->parseAndAnswer("getUserInfo 42");
 
     EXPECT_EQ(responseMessages.size(), 1);
     EXPECT_NE(responseMessages[0].find("42"), std::string::npos);
@@ -81,20 +81,20 @@ TEST_F(RouterTest, GetUserWithoutIdArgument)
 {
     EXPECT_CALL(*mockInfoController, getUserInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getUser");
+    router->parseAndAnswer("getUserInfo");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: getUser requires user ID");
+    EXPECT_EQ(responseMessages[0], "Error: getUserInfo requires user ID");
 }
 
 TEST_F(RouterTest, GetUserWithInvalidId)
 {
     EXPECT_CALL(*mockInfoController, getUserInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getUser invalid_id");
+    router->parseAndAnswer("getUserInfo invalid_id");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: invalid arguments for getUser");
+    EXPECT_EQ(responseMessages[0], "Error: invalid arguments for getUserInfo");
 }
 
 TEST_F(RouterTest, AddUserSuccessfully)
@@ -553,7 +553,7 @@ TEST_F(RouterTest, MultipleCommandsInSequence)
         .WillOnce(
             Invoke([newId](const std::string& nick, std::function<void(ull)> cb) { cb(newId); }));
 
-    router->parseAndAnswer("getUser 1");
+    router->parseAndAnswer("getUserInfo 1");
     router->parseAndAnswer("addUser NewUser");
 
     EXPECT_EQ(responseMessages.size(), 2);

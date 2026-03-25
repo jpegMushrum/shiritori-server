@@ -23,13 +23,13 @@ void Router::parseAndAnswer(std::string querry)
         args.push_back(t);
     }
 
-    if (command == "getUser")
+    if (command == "getUserInfo")
     {
         try
         {
             if (args.empty())
             {
-                writeCb_("Error: getUser requires user ID");
+                writeCb_("Error: getUserInfo requires user ID");
                 return;
             }
 
@@ -40,7 +40,7 @@ void Router::parseAndAnswer(std::string querry)
         }
         catch (...)
         {
-            writeCb_("Error: invalid arguments for getUser");
+            writeCb_("Error: invalid arguments for getUserInfo");
         }
 
         return;
