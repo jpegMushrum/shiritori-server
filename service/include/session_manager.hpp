@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <map>
 #include <mutex>
 #include <random>
@@ -8,9 +9,17 @@
 
 using ull = unsigned long long;
 
+struct SessionData
+{
+    ull userId;
+    std::chrono::steady_clock::time_point createdAt;
+};
+
 class SessionManager
 {
   public:
+    static constexpr std::chrono::seconds SESSION_TTL{86400};
+
     SessionManager();
 
     std::string createSession(ull userId);
@@ -21,10 +30,14 @@ class SessionManager
 
     void removeSession(const std::string& sessionId);
 
+    void cleanupExpiredSessions();
+
   private:
-    std::map<std::string, ull> sessions_;
-    mutable std::shared_mutex sessions_mutex_;
+    std::map<std::string, SessionData> sessions_;
+    mutable std::shared_mutex mu_;
     std::mt19937 generator_;
 
     std::string generateSessionId();
+
+    bool isSessionExpired(const SessionData& session) const;
 };

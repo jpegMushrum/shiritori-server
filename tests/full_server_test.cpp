@@ -355,7 +355,6 @@ TEST_F(FullServerTest, SequentialRequestsFromSingleClient)
     std::string session2 = response2;
 
     std::string response3 = sendAndReceive(client, "getUserInfo " + session1);
-    std::cout << "d|" << response3 << '\n';
     EXPECT_FALSE(isErrorResponse(response3));
 
     client.disconnect();

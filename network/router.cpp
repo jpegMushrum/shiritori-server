@@ -109,6 +109,35 @@ void Router::parseAndAnswer(std::string querry)
         return;
     }
 
+    if (command == "logout")
+    {
+        try
+        {
+            if (args.size() < 1)
+            {
+                writeCb_("Error: logout requires session ID");
+                return;
+            }
+
+            std::string sessionId = args[0];
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            sessionManager_->removeSession(sessionId);
+            writeCb_("Logged out successfully");
+        }
+        catch (...)
+        {
+            writeCb_("Error: invalid arguments for logout");
+        }
+
+        return;
+    }
+
     if (command == "getActiveGames")
     {
         try
