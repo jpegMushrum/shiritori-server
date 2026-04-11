@@ -3,6 +3,8 @@
 
 #include "router.hpp"
 
+std::shared_ptr<SessionManager> Router::sessionManager_ = std::make_shared<SessionManager>();
+
 Router::Router(std::function<void(std::string)> writeCb, std::shared_ptr<IInfoController> infoCtr,
                std::shared_ptr<IGamesController> gamesCtr)
     : writeCb_(writeCb), infoCtr_(infoCtr), gamesCtr_(gamesCtr)
@@ -29,14 +31,23 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.empty())
             {
-                writeCb_("Error: getUserInfo requires user ID");
+                writeCb_("Error: getUserInfo requires session ID");
                 return;
             }
 
-            ull id = std::stoull(args[0]);
+            std::string sessionId = args[0];
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             auto writeCb = writeCb_;
-            infoCtr_->getUserInfo(id, [writeCb](UserInfo ui) { writeCb(Router::uiToString(ui)); });
+            infoCtr_->getUserInfo(userId,
+                                  [writeCb](UserInfo ui) { writeCb(Router::uiToString(ui)); });
         }
         catch (...)
         {
@@ -64,6 +75,35 @@ void Router::parseAndAnswer(std::string querry)
         catch (...)
         {
             writeCb_("Error: invalid arguments for addUser");
+        }
+
+        return;
+    }
+
+    if (command == "login")
+    {
+        try
+        {
+            if (args.size() < 1)
+            {
+                writeCb_("Error: login requires username");
+                return;
+            }
+
+            std::string username = args[0];
+
+            auto writeCb = writeCb_;
+            auto sessionManager = sessionManager_;
+            infoCtr_->login(username,
+                            [writeCb, sessionManager](ull userId)
+                            {
+                                std::string sessionId = sessionManager->createSession(userId);
+                                writeCb(sessionId);
+                            });
+        }
+        catch (...)
+        {
+            writeCb_("Error: invalid arguments for login");
         }
 
         return;
@@ -129,11 +169,19 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.size() < 1)
             {
-                writeCb_("Error: startNewGame requires user ID");
+                writeCb_("Error: startNewGame requires session ID");
                 return;
             }
 
-            ull userId = std::stoull(args[0]);
+            std::string sessionId = args[0];
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             auto writeCb = writeCb_;
             gamesCtr_->startNewGame(userId,
@@ -153,12 +201,20 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.size() < 2)
             {
-                writeCb_("Error: stopGame requires game ID and user ID");
+                writeCb_("Error: stopGame requires session ID and game ID");
                 return;
             }
 
-            ull gameId = std::stoull(args[0]);
-            ull userId = std::stoull(args[1]);
+            std::string sessionId = args[0];
+            ull gameId = std::stoull(args[1]);
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             gamesCtr_->stopGame(gameId, userId);
             writeCb_("Game stopped successfully");
@@ -177,12 +233,20 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.size() < 2)
             {
-                writeCb_("Error: addPlayerToGame requires user ID and game ID");
+                writeCb_("Error: addPlayerToGame requires session ID and game ID");
                 return;
             }
 
-            ull userId = std::stoull(args[0]);
+            std::string sessionId = args[0];
             ull gameId = std::stoull(args[1]);
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             gamesCtr_->addPlayerToGame(userId, gameId);
             writeCb_("Player added successfully");
@@ -201,13 +265,21 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.size() < 3)
             {
-                writeCb_("Error: handleWord requires game ID, user ID, and word");
+                writeCb_("Error: handleWord requires game ID, session ID, and word");
                 return;
             }
 
             ull gameId = std::stoull(args[0]);
-            ull userId = std::stoull(args[1]);
+            std::string sessionId = args[1];
             std::string word = args[2];
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             auto writeCb = writeCb_;
             gamesCtr_->handleWord(gameId, userId, word, [writeCb](HandleWordStatus status)
@@ -227,11 +299,19 @@ void Router::parseAndAnswer(std::string querry)
         {
             if (args.size() < 1)
             {
-                writeCb_("Error: handleWord requires game ID, user ID, and word");
+                writeCb_("Error: getGamesHistory requires session ID");
                 return;
             }
 
-            ull userId = std::stoull(args[0]);
+            std::string sessionId = args[0];
+
+            if (!sessionManager_->sessionExists(sessionId))
+            {
+                writeCb_("Error: Invalid session ID");
+                return;
+            }
+
+            ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
             auto writeCb = writeCb_;
             infoCtr_->getGamesHistory(userId,
@@ -253,7 +333,7 @@ void Router::parseAndAnswer(std::string querry)
         }
         catch (...)
         {
-            writeCb_("Error: invalid arguments for handleWord");
+            writeCb_("Error: invalid arguments for getGamesHistory");
         }
 
         return;

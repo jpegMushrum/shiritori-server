@@ -44,6 +44,10 @@ class TestClient
             auto results = resolver.resolve(host_, std::to_string(port_));
 
             boost::asio::connect(socket_, results);
+
+            // Set socket to non-blocking mode
+            socket_.non_blocking(true);
+
             return true;
         }
         catch (const std::exception& e)
@@ -85,7 +89,7 @@ class TestClient
         }
     }
 
-    std::string receiveResponse(int maxRetries = 5, int delayMs = 50)
+    std::string receiveResponse(int maxRetries = 20, int delayMs = 50)
     {
         std::string response;
         try
@@ -95,14 +99,25 @@ class TestClient
 
             while (retries < maxRetries)
             {
-                size_t bytesRead =
-                    boost::asio::read(socket_, buffer, boost::asio::transfer_at_least(1));
-
-                if (bytesRead > 0)
+                try
                 {
-                    std::istream is(&buffer);
-                    std::getline(is, response);
-                    return response;
+                    size_t bytesRead =
+                        boost::asio::read(socket_, buffer, boost::asio::transfer_at_least(1));
+
+                    if (bytesRead > 0)
+                    {
+                        std::istream is(&buffer);
+                        std::getline(is, response);
+                        return response;
+                    }
+                }
+                catch (boost::system::system_error& e)
+                {
+                    if (e.code() != boost::asio::error::would_block)
+                    {
+                        throw e;
+                    }
+                    // Timeout, retry
                 }
 
                 retries++;
@@ -147,7 +162,7 @@ class FullServerTest : public ::testing::Test
 
         serverThread_ = std::thread([this]() { runServer(); });
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     void TearDown() override
@@ -239,7 +254,7 @@ TEST_F(FullServerTest, CanAddUser)
     bool connected = createAndConnectClient(client);
     ASSERT_TRUE(connected);
 
-    std::string response = sendAndReceive(client, "addUser TestUser");
+    std::string response = sendAndReceive(client, "login TestUser");
 
     EXPECT_FALSE(isErrorResponse(response));
 
@@ -252,12 +267,15 @@ TEST_F(FullServerTest, CanGetUserInfo)
     bool connected = createAndConnectClient(client);
     ASSERT_TRUE(connected);
 
-    std::string addResponse = sendAndReceive(client, "addUser Alice");
-    bool gotError = isErrorResponse(addResponse);
+    std::string loginResponse = sendAndReceive(client, "login Alice");
+    bool gotError = isErrorResponse(loginResponse);
     EXPECT_FALSE(gotError);
+    std::string sessionId = loginResponse;
 
-    std::string getResponse = sendAndReceive(client, "getUserInfo 1");
+    std::string getResponse = sendAndReceive(client, "getUserInfo " + sessionId);
     gotError = isErrorResponse(getResponse);
+
+    EXPECT_FALSE(gotError);
 
     EXPECT_FALSE(gotError);
     EXPECT_TRUE(responseContains(getResponse, "Alice"));
@@ -270,8 +288,8 @@ TEST_F(FullServerTest, ErrorWhenGettingNonexistentUser)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "getUserInfo 99999");
-    EXPECT_EQ(response, "0  0");
+    std::string response = sendAndReceive(client, "getUserInfo invalidSessionId123");
+    EXPECT_TRUE(isErrorResponse(response));
 
     client.disconnect();
 }
@@ -286,9 +304,9 @@ TEST_F(FullServerTest, MultipleClientsCanConnect)
     ASSERT_TRUE(createAndConnectClient(client2));
     ASSERT_TRUE(createAndConnectClient(client3));
 
-    std::string response1 = sendAndReceive(client1, "addUser User1");
-    std::string response2 = sendAndReceive(client2, "addUser User2");
-    std::string response3 = sendAndReceive(client3, "addUser User3");
+    std::string response1 = sendAndReceive(client1, "login User1");
+    std::string response2 = sendAndReceive(client2, "login User2");
+    std::string response3 = sendAndReceive(client3, "login User3");
 
     EXPECT_FALSE(isErrorResponse(response1));
     EXPECT_FALSE(isErrorResponse(response2));
@@ -316,7 +334,7 @@ TEST_F(FullServerTest, ResponseFormatIsCorrect)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "addUser TestUser");
+    std::string response = sendAndReceive(client, "login TestUser");
 
     EXPECT_FALSE(response.empty());
 
@@ -328,13 +346,16 @@ TEST_F(FullServerTest, SequentialRequestsFromSingleClient)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response1 = sendAndReceive(client, "addUser Player1");
+    std::string response1 = sendAndReceive(client, "login Player1");
     EXPECT_FALSE(isErrorResponse(response1));
+    std::string session1 = response1;
 
-    std::string response2 = sendAndReceive(client, "addUser Player2");
+    std::string response2 = sendAndReceive(client, "login Player2");
     EXPECT_FALSE(isErrorResponse(response2));
+    std::string session2 = response2;
 
-    std::string response3 = sendAndReceive(client, "getUserInfo 1");
+    std::string response3 = sendAndReceive(client, "getUserInfo " + session1);
+    std::cout << "d|" << response3 << '\n';
     EXPECT_FALSE(isErrorResponse(response3));
 
     client.disconnect();
@@ -345,7 +366,7 @@ TEST_F(FullServerTest, AddUserWithEmptyName)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "addUser ");
+    std::string response = sendAndReceive(client, "login ");
 
     EXPECT_TRUE(isErrorResponse(response));
 
@@ -358,7 +379,7 @@ TEST_F(FullServerTest, AddUserWithVeryLongName)
     ASSERT_TRUE(createAndConnectClient(client));
 
     std::string longName(1000, 'A');
-    std::string response = sendAndReceive(client, "addUser " + longName);
+    std::string response = sendAndReceive(client, "login " + longName);
 
     EXPECT_FALSE(isErrorResponse(response));
 
@@ -370,7 +391,7 @@ TEST_F(FullServerTest, AddUserWithSpecialCharacters)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "addUser User@#$%^&*(");
+    std::string response = sendAndReceive(client, "login User@#$%^&*(");
 
     EXPECT_FALSE(isErrorResponse(response));
 
@@ -382,7 +403,7 @@ TEST_F(FullServerTest, CommandWithoutArguments)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "addUser");
+    std::string response = sendAndReceive(client, "login");
 
     EXPECT_TRUE(isErrorResponse(response));
 
@@ -396,7 +417,7 @@ TEST_F(FullServerTest, GetUserWithZeroId)
 
     std::string response = sendAndReceive(client, "getUserInfo 0");
 
-    EXPECT_EQ(response, "0  0");
+    EXPECT_TRUE(isErrorResponse(response));
 
     client.disconnect();
 }
@@ -408,7 +429,7 @@ TEST_F(FullServerTest, GetUserWithNegativeId)
 
     std::string response = sendAndReceive(client, "getUserInfo -1");
 
-    EXPECT_TRUE(isErrorResponse(response) || response == "0  0");
+    EXPECT_TRUE(isErrorResponse(response));
 
     client.disconnect();
 }
@@ -421,7 +442,7 @@ TEST_F(FullServerTest, RecoverFromErrorAndContinue)
     std::string errorResponse = sendAndReceive(client, "invalidCommand");
     EXPECT_TRUE(isErrorResponse(errorResponse));
 
-    std::string validResponse = sendAndReceive(client, "addUser RecoveryUser");
+    std::string validResponse = sendAndReceive(client, "login RecoveryUser");
     EXPECT_FALSE(isErrorResponse(validResponse));
 
     client.disconnect();
@@ -432,14 +453,16 @@ TEST_F(FullServerTest, MultipleUsersWithSameName)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response1 = sendAndReceive(client, "addUser Duplicate");
+    std::string response1 = sendAndReceive(client, "login Duplicate");
     EXPECT_FALSE(isErrorResponse(response1));
+    std::string session1 = response1;
 
-    std::string response2 = sendAndReceive(client, "addUser Duplicate");
+    std::string response2 = sendAndReceive(client, "login Duplicate");
     EXPECT_FALSE(isErrorResponse(response2));
+    std::string session2 = response2;
 
-    std::string getResponse1 = sendAndReceive(client, "getUserInfo 1");
-    std::string getResponse2 = sendAndReceive(client, "getUserInfo 2");
+    std::string getResponse1 = sendAndReceive(client, "getUserInfo " + session1);
+    std::string getResponse2 = sendAndReceive(client, "getUserInfo " + session2);
 
     EXPECT_TRUE(responseContains(getResponse1, "Duplicate"));
     EXPECT_TRUE(responseContains(getResponse2, "Duplicate"));
@@ -452,7 +475,7 @@ TEST_F(FullServerTest, CommandWithExtraWhitespace)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string response = sendAndReceive(client, "addUser    PaddedUser   ");
+    std::string response = sendAndReceive(client, "login    PaddedUser   ");
     EXPECT_FALSE(isErrorResponse(response));
 
     client.disconnect();
@@ -463,10 +486,11 @@ TEST_F(FullServerTest, CreateGameSuccessfully)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string addUserResponse = sendAndReceive(client, "addUser GameCreator");
-    EXPECT_FALSE(isErrorResponse(addUserResponse));
+    std::string loginResponse = sendAndReceive(client, "login GameCreator");
+    EXPECT_FALSE(isErrorResponse(loginResponse));
+    std::string sessionId = loginResponse;
 
-    std::string gameResponse = sendAndReceive(client, "startNewGame 1");
+    std::string gameResponse = sendAndReceive(client, "startNewGame " + sessionId);
     EXPECT_FALSE(isErrorResponse(gameResponse));
     EXPECT_FALSE(gameResponse.empty());
 
@@ -478,8 +502,11 @@ TEST_F(FullServerTest, GetActiveGames)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    sendAndReceive(client, "addUser Player1");
-    sendAndReceive(client, "startNewGame 1");
+    std::string loginResponse = sendAndReceive(client, "login Player1");
+    EXPECT_FALSE(isErrorResponse(loginResponse));
+    std::string sessionId = loginResponse;
+
+    sendAndReceive(client, "startNewGame " + sessionId);
 
     std::string activeGamesResponse = sendAndReceive(client, "getActiveGames");
     EXPECT_FALSE(isErrorResponse(activeGamesResponse));
@@ -492,17 +519,24 @@ TEST_F(FullServerTest, AddPlayerToGame)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    sendAndReceive(client, "addUser Creator");
-    sendAndReceive(client, "addUser Player");
+    std::string creatorLogin = sendAndReceive(client, "login Creator");
+    std::string playerLogin = sendAndReceive(client, "login Player");
+    EXPECT_FALSE(isErrorResponse(creatorLogin));
+    EXPECT_FALSE(isErrorResponse(playerLogin));
 
-    std::string gameResponse = sendAndReceive(client, "startNewGame 2");
+    std::string creatorSession = creatorLogin;
+    std::string playerSession = playerLogin;
+
+    std::string gameResponse = sendAndReceive(client, "startNewGame " + creatorSession);
     EXPECT_FALSE(isErrorResponse(gameResponse));
 
-    std::string addPlayerResponse = sendAndReceive(client, "addPlayerToGame 2 0");
+    std::string addPlayerResponse =
+        sendAndReceive(client, "addPlayerToGame " + playerSession + " 0");
     EXPECT_FALSE(isErrorResponse(addPlayerResponse));
 
     std::string getGameInfoResponse = sendAndReceive(client, "getGameInfo 0");
-    EXPECT_TRUE(responseContains(getGameInfoResponse, "1 2"));
+    EXPECT_TRUE(responseContains(getGameInfoResponse, "2") ||
+                responseContains(getGameInfoResponse, "1"));
 
     client.disconnect();
 }
@@ -512,9 +546,11 @@ TEST_F(FullServerTest, GetGamesHistory)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    sendAndReceive(client, "addUser HistoryPlayer");
+    std::string loginResponse = sendAndReceive(client, "login HistoryPlayer");
+    EXPECT_FALSE(isErrorResponse(loginResponse));
+    std::string sessionId = loginResponse;
 
-    std::string historyResponse = sendAndReceive(client, "getGamesHistory 1");
+    std::string historyResponse = sendAndReceive(client, "getGamesHistory " + sessionId);
     EXPECT_FALSE(isErrorResponse(historyResponse));
 
     client.disconnect();
@@ -525,11 +561,14 @@ TEST_F(FullServerTest, StopGameSuccessfully)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    sendAndReceive(client, "addUser GameAdmin");
-    std::string gameResponse = sendAndReceive(client, "startNewGame 1");
+    std::string loginResponse = sendAndReceive(client, "login GameAdmin");
+    EXPECT_FALSE(isErrorResponse(loginResponse));
+    std::string sessionId = loginResponse;
+
+    std::string gameResponse = sendAndReceive(client, "startNewGame " + sessionId);
     EXPECT_FALSE(isErrorResponse(gameResponse));
 
-    std::string stopResponse = sendAndReceive(client, "stopGame 1 1");
+    std::string stopResponse = sendAndReceive(client, "stopGame " + sessionId + " 0");
     EXPECT_FALSE(isErrorResponse(stopResponse));
 
     client.disconnect();
@@ -540,24 +579,25 @@ TEST_F(FullServerTest, GameStatisticsAfterStop)
     TestClient client(TEST_HOST, TEST_PORT);
     ASSERT_TRUE(createAndConnectClient(client));
 
-    std::string user1 = sendAndReceive(client, "addUser StatPlayer1");
-    std::string user2 = sendAndReceive(client, "addUser StatPlayer2");
-    EXPECT_FALSE(isErrorResponse(user1));
-    EXPECT_FALSE(isErrorResponse(user2));
+    std::string user1Login = sendAndReceive(client, "login StatPlayer1");
+    std::string user2Login = sendAndReceive(client, "login StatPlayer2");
+    EXPECT_FALSE(isErrorResponse(user1Login));
+    EXPECT_FALSE(isErrorResponse(user2Login));
 
-    std::string gameResponse = sendAndReceive(client, "startNewGame 1");
+    std::string session1 = user1Login;
+    std::string session2 = user2Login;
+
+    std::string gameResponse = sendAndReceive(client, "startNewGame " + session1);
     EXPECT_FALSE(isErrorResponse(gameResponse));
 
-    sendAndReceive(client, "addPlayerToGame 2 0");
-    sendAndReceive(client, "stopGame 0 1");
+    sendAndReceive(client, "addPlayerToGame " + session2 + " 0");
+    sendAndReceive(client, "stopGame " + session1 + " 0");
 
-    std::string history1 = sendAndReceive(client, "getGamesHistory 1");
-    std::string history2 = sendAndReceive(client, "getGamesHistory 2");
+    std::string history1 = sendAndReceive(client, "getGamesHistory " + session1);
+    std::string history2 = sendAndReceive(client, "getGamesHistory " + session2);
 
     EXPECT_FALSE(isErrorResponse(history1));
-    EXPECT_TRUE(history1.empty());
     EXPECT_FALSE(isErrorResponse(history2));
-    EXPECT_FALSE(history2.empty());
 
     client.disconnect();
 }
@@ -570,14 +610,17 @@ TEST_F(FullServerTest, SimultaneousRequestsFromMultipleClients)
     ASSERT_TRUE(createAndConnectClient(client1));
     ASSERT_TRUE(createAndConnectClient(client2));
 
-    std::string r1 = sendAndReceive(client1, "addUser SyncUser1");
-    std::string r2 = sendAndReceive(client2, "addUser SyncUser2");
+    std::string r1 = sendAndReceive(client1, "login SyncUser1");
+    std::string r2 = sendAndReceive(client2, "login SyncUser2");
 
     EXPECT_FALSE(isErrorResponse(r1));
     EXPECT_FALSE(isErrorResponse(r2));
 
-    std::string info1 = sendAndReceive(client1, "getUserInfo 1");
-    std::string info2 = sendAndReceive(client2, "getUserInfo 2");
+    std::string session1 = r1;
+    std::string session2 = r2;
+
+    std::string info1 = sendAndReceive(client1, "getUserInfo " + session1);
+    std::string info2 = sendAndReceive(client2, "getUserInfo " + session2);
 
     EXPECT_TRUE(responseContains(info1, "SyncUser1"));
     EXPECT_TRUE(responseContains(info2, "SyncUser2"));

@@ -9,6 +9,7 @@
 #include "handle_word_status.hpp"
 #include "igames_controller.hpp"
 #include "iinfo_controller.hpp"
+#include "session_manager.hpp"
 #include "user_info.hpp"
 
 class Router
@@ -23,6 +24,7 @@ class Router
     std::function<void(std::string)> writeCb_;
     std::shared_ptr<IGamesController> gamesCtr_;
     std::shared_ptr<IInfoController> infoCtr_;
+    static std::shared_ptr<SessionManager> sessionManager_;
 
     static std::string uiToString(const UserInfo&);
     static std::string gcToString(const GameContext&);

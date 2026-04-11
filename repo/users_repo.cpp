@@ -121,3 +121,34 @@ void UsersRepo::changeUser(User user)
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }
+
+User UsersRepo::getUserByNickname(const std::string& nickname)
+{
+    sqlite3* db;
+    if (sqlite3_open(dbPath_.c_str(), &db) != SQLITE_OK)
+        throw std::runtime_error("Cannot open DB");
+
+    sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+
+    sqlite3_stmt* stmt;
+    sqlite3_prepare_v2(db, "SELECT id, nickname FROM users WHERE nickname=?;", -1, &stmt, nullptr);
+    sqlite3_bind_text(stmt, 1, nickname.c_str(), -1, SQLITE_TRANSIENT);
+
+    User user;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        ull id = sqlite3_column_int64(stmt, 0);
+        std::string retrievedNickname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        user = User(id, retrievedNickname);
+    }
+    else
+    {
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        throw std::runtime_error("User not found");
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return user;
+}

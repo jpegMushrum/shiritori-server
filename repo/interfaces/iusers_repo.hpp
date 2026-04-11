@@ -14,4 +14,5 @@ class IUsersRepo
     virtual ull addUser(User user) = 0;
     virtual void changeUser(User user) = 0;
     virtual User getUser(ull id) = 0;
+    virtual User getUserByNickname(const std::string& nickname) = 0;
 };

@@ -17,5 +17,6 @@ class IInfoService
 
     virtual UserInfo getUserInfo(ull) = 0;
     virtual ull addUser(const std::string&) = 0;
+    virtual ull login(const std::string&) = 0;
     virtual std::vector<GameInfo> getGamesHistory(ull) = 0;
 };

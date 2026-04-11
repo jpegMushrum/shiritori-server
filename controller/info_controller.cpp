@@ -33,6 +33,23 @@ void InfoController::addUser(const std::string& nickname, std::function<void(ull
         });
 }
 
+void InfoController::login(const std::string& username, std::function<void(ull)> f)
+{
+    taskQueue_->addTask(
+        [this, username, f]()
+        {
+            try
+            {
+                auto userId = infoService_->login(username);
+                f(userId);
+            }
+            catch (std::runtime_error e)
+            {
+                std::cerr << e.what() << '\n';
+            }
+        });
+}
+
 void InfoController::getGamesHistory(ull id, std::function<void(std::vector<GameInfo>)> f)
 {
     taskQueue_->addTask(

@@ -36,6 +36,7 @@ class MockUsersRepo : public IUsersRepo
     MOCK_METHOD(User, getUser, (ull), (override));
     MOCK_METHOD(ull, addUser, (User), (override));
     MOCK_METHOD(void, changeUser, (User), (override));
+    MOCK_METHOD(User, getUserByNickname, (const std::string&), (override));
 };
 
 class GameSessionTest : public ::testing::Test

@@ -26,6 +26,7 @@ class MockInfoService : public IInfoService
     MOCK_METHOD(UserInfo, getUserInfo, (ull), (override));
     MOCK_METHOD(ull, addUser, (const std::string&), (override));
     MOCK_METHOD(std::vector<GameInfo>, getGamesHistory, (ull), (override));
+    MOCK_METHOD(ull, login, (const std::string&), (override));
 };
 
 class InfoControllerTest : public ::testing::Test

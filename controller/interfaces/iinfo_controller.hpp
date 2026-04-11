@@ -16,5 +16,6 @@ class IInfoController
 
     virtual void getUserInfo(ull, std::function<void(UserInfo)>) = 0;
     virtual void addUser(const std::string&, std::function<void(ull)>) = 0;
+    virtual void login(const std::string&, std::function<void(ull)>) = 0;
     virtual void getGamesHistory(ull, std::function<void(std::vector<GameInfo>)>) = 0;
 };

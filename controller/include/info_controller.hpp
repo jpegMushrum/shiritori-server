@@ -18,6 +18,7 @@ class InfoController : public IInfoController
 
     void getUserInfo(ull, std::function<void(UserInfo)>) override;
     void addUser(const std::string&, std::function<void(ull)>) override;
+    void login(const std::string&, std::function<void(ull)>) override;
 
     void getGamesHistory(ull, std::function<void(std::vector<GameInfo>)>) override;
 

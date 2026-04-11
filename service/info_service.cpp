@@ -38,6 +38,21 @@ ull InfoService::addUser(const std::string& nickname)
     return id;
 }
 
+ull InfoService::login(const std::string& username)
+{
+    try
+    {
+        auto user = usersRepo_->getUserByNickname(username);
+        return user.id;
+    }
+    catch (...)
+    {
+        User newUser(0, username);
+        ull id = usersRepo_->addUser(newUser);
+        return id;
+    }
+}
+
 std::vector<GameInfo> InfoService::getGamesHistory(ull userId)
 {
     auto history = gamesRepo_->getGameHistoryByUserId(userId);

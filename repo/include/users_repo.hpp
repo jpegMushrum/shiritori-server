@@ -15,6 +15,7 @@ class UsersRepo : public IUsersRepo
     ull addUser(User user) override;
     void changeUser(User user) override;
     User getUser(ull id) override;
+    User getUserByNickname(const std::string& nickname) override;
 
   private:
     std::string dbPath_;

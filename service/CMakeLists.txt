@@ -5,6 +5,7 @@ add_library(service STATIC
     mapper.cpp
     game_context.cpp
     player_score.cpp
+    session_manager.cpp
     
     dto/user_info.cpp
     dto/game_info.cpp
