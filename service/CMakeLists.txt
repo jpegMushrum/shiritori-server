@@ -8,6 +8,7 @@ add_library(service STATIC
     
     dto/user_info.cpp
     dto/game_info.cpp
+    dto/word_info.cpp
 
     interfaces/iinfo_service.cpp
     interfaces/igame_session.cpp

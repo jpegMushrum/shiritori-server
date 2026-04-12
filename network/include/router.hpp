@@ -11,6 +11,7 @@
 #include "iinfo_controller.hpp"
 #include "session_manager.hpp"
 #include "user_info.hpp"
+#include "word_info.hpp"
 
 class Router
 {
@@ -30,4 +31,5 @@ class Router
     static std::string gcToString(const GameContext&);
     static std::string giToString(const GameInfo&);
     static std::string statusToString(HandleWordStatus);
+    static std::string wiToString(const WordInfo&);
 };

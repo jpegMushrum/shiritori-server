@@ -1,7 +1,11 @@
+#include <format>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <sstream>
 
 #include "router.hpp"
+
+using json = nlohmann::json;
 
 std::shared_ptr<SessionManager> Router::sessionManager_ = std::make_shared<SessionManager>();
 
@@ -277,7 +281,14 @@ void Router::parseAndAnswer(std::string querry)
 
             ull userId = sessionManager_->getUserIdFromSession(sessionId);
 
-            gamesCtr_->addPlayerToGame(userId, gameId);
+            auto writeCb = writeCb_;
+            gamesCtr_->addPlayerToGame(userId, gameId,
+                                       [writeCb, gameId](WordInfo wi)
+                                       {
+                                           std::string msg = std::format("NewWord {} {}", gameId,
+                                                                         Router::wiToString(wi));
+                                           writeCb(msg);
+                                       });
             writeCb_("Player added successfully");
         }
         catch (...)
@@ -423,4 +434,13 @@ std::string Router::statusToString(HandleWordStatus status)
     default:
         return "UNKNOWN_STATUS";
     }
+}
+
+std::string Router::wiToString(const WordInfo& wi)
+{
+    json wiJson = {{"kanji", wi.kanji},
+                   {"readings", wi.readings},
+                   {"partsOfSpeach", wi.partsOfSpeach},
+                   {"meaning", wi.meaning}};
+    return wiJson.dump();
 }

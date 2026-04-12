@@ -16,6 +16,6 @@ std::ostream& operator<<(std::ostream& out, const GameContext& gc)
     std::string lastKana = boost::locale::conv::utf_to_utf<char>(u32kana);
 
     out << gc.id << " " << gc.wordsCount << " " << gc.playersCount << " " << gc.adminId << " "
-        << gc.lastPlayerId << " " << lastKana << "\n";
+        << gc.lastPlayerId << " " << lastKana;
     return out;
 }

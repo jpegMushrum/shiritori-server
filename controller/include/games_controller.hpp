@@ -25,7 +25,7 @@ class GamesController : public IGamesController
     void startNewGame(ull, std::function<void(GameContext)>) override;
     void handleWord(ull, ull, std::string, std::function<void(HandleWordStatus)>) override;
     void getActiveGames(std::function<void(std::vector<GameContext>)>) override;
-    void addPlayerToGame(ull, ull) override;
+    void addPlayerToGame(ull, ull, std::function<void(WordInfo)>) override;
     void stopGame(ull, ull) override;
     void getGameInfo(ull, std::function<void(GameContext)>) override;
 

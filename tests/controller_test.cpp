@@ -87,6 +87,7 @@ class MockGameSession : public IGameSession
     MOCK_METHOD(HandleWordStatus, handleWord, (ull, const std::string&), (override));
     MOCK_METHOD(void, stopGame, (), (override));
     MOCK_METHOD(GameContext, getInfo, (), (override));
+    MOCK_METHOD(void, subscribe, (std::function<void(WordInfo)>), (override));
 };
 
 class MockGameFabric : public IGameFabric
@@ -203,7 +204,7 @@ TEST_F(GamesControllerTest, AddPlayerToGameCallsAddUser)
     controller->startNewGame(playerId, [](GameContext) {});
 
     EXPECT_CALL(*mockSession, addUser(playerId)).Times(1);
-    controller->addPlayerToGame(playerId, gameId);
+    controller->addPlayerToGame(playerId, gameId, [](WordInfo wi) {});
 
     // Waiting
     std::promise<GameContext> promise;

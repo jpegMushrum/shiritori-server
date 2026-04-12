@@ -15,3 +15,7 @@ target_link_libraries(network PUBLIC
     ${Boost_LIBRARIES}
     ws2_32
 )
+
+target_link_libraries(network PRIVATE 
+    nlohmann_json::nlohmann_json
+)

@@ -128,10 +128,10 @@ void GamesController::getGameInfo(ull gameId, std::function<void(GameContext)> f
         });
 }
 
-void GamesController::addPlayerToGame(ull userId, ull gameId)
+void GamesController::addPlayerToGame(ull userId, ull gameId, std::function<void(WordInfo)> update)
 {
     taskQueue_->addTask(
-        [this, userId, gameId]()
+        [this, userId, gameId, update]()
         {
             std::shared_lock lock(mu_);
             auto game = activeGames_.find(gameId);
@@ -141,5 +141,6 @@ void GamesController::addPlayerToGame(ull userId, ull gameId)
             }
 
             game->second->addUser(userId);
+            game->second->subscribe(update);
         });
 }

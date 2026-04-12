@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -7,6 +8,7 @@
 #include "games_repo.hpp"
 #include "handle_word_status.hpp"
 #include "idictionary.hpp"
+#include "word_info.hpp"
 
 using ull = unsigned long long;
 
@@ -18,6 +20,7 @@ class IGameSession
     virtual void addUser(ull) = 0;
     virtual HandleWordStatus handleWord(ull, const std::string&) = 0;
     virtual void stopGame() = 0;
+    virtual void subscribe(std::function<void(WordInfo)>) = 0;
 
     virtual GameContext getInfo() = 0;
 };

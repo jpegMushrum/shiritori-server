@@ -11,6 +11,7 @@
 #include "iinfo_controller.hpp"
 #include "router.hpp"
 #include "user_info.hpp"
+#include "word_info.hpp"
 
 using ::testing::_;
 using ::testing::Invoke;
@@ -36,7 +37,7 @@ class MockGamesController : public IGamesController
     MOCK_METHOD(void, handleWord, (ull, ull, std::string, std::function<void(HandleWordStatus)>),
                 (override));
     MOCK_METHOD(void, getActiveGames, (std::function<void(std::vector<GameContext>)>), (override));
-    MOCK_METHOD(void, addPlayerToGame, (ull, ull), (override));
+    MOCK_METHOD(void, addPlayerToGame, (ull, ull, std::function<void(WordInfo)>), (override));
     MOCK_METHOD(void, stopGame, (ull, ull), (override));
     MOCK_METHOD(void, getGameInfo, (ull, std::function<void(GameContext)>), (override));
 };
@@ -315,7 +316,7 @@ TEST_F(RouterTest, AddPlayerToGameSuccessfully)
     ull gameId = 3;
     std::string sessionId = getValidSessionId();
 
-    EXPECT_CALL(*mockGamesController, addPlayerToGame(userId, gameId)).Times(1);
+    EXPECT_CALL(*mockGamesController, addPlayerToGame(userId, gameId, _)).Times(1);
 
     responseMessages.clear();
     router->parseAndAnswer("addPlayerToGame " + sessionId + " 3");
@@ -326,7 +327,7 @@ TEST_F(RouterTest, AddPlayerToGameSuccessfully)
 
 TEST_F(RouterTest, AddPlayerToGameWithMissingSessionId)
 {
-    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _)).Times(0);
+    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
     router->parseAndAnswer("addPlayerToGame");
 
@@ -337,7 +338,7 @@ TEST_F(RouterTest, AddPlayerToGameWithMissingSessionId)
 TEST_F(RouterTest, AddPlayerToGameWithMissingGameId)
 {
     std::string sessionId = getValidSessionId();
-    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _)).Times(0);
+    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
     responseMessages.clear();
     router->parseAndAnswer("addPlayerToGame " + sessionId);
@@ -348,7 +349,7 @@ TEST_F(RouterTest, AddPlayerToGameWithMissingGameId)
 
 TEST_F(RouterTest, AddPlayerToGameWithInvalidSessionId)
 {
-    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _)).Times(0);
+    EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
     router->parseAndAnswer("addPlayerToGame invalid 3");
 

@@ -16,9 +16,11 @@
 #include "handle_word_status.hpp"
 #include "igame_session.hpp"
 #include "jisho.hpp"
+#include "mapper.hpp"
 #include "player_score.hpp"
 #include "user.hpp"
 #include "word.hpp"
+#include "word_info.hpp"
 
 using ull = unsigned long long;
 
@@ -33,6 +35,7 @@ class GameSession : public IGameSession
     void stopGame() override;
 
     GameContext getInfo() override;
+    void subscribe(std::function<void(WordInfo)>) override;
 
   private:
     void saveStats();
@@ -46,4 +49,7 @@ class GameSession : public IGameSession
     bool stop_;
     std::mutex mu_;
     GameContext ctx_;
+
+    std::vector<std::function<void(WordInfo)>> subscriptions_;
+    void throwUpdate(WordInfo);
 };
