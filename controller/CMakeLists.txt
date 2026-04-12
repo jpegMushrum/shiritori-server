@@ -2,6 +2,7 @@ add_library(controller STATIC
     info_controller.cpp
     task_queue.cpp
     games_controller.cpp
+    session_manager.cpp
 
     interfaces/iinfo_controller.cpp
     interfaces/igames_controller.cpp
