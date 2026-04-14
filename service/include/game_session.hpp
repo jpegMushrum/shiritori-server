@@ -30,7 +30,7 @@ class GameSession : public IGameSession
     GameSession(ull, ull, std::shared_ptr<IDictionary>, std::shared_ptr<IGamesRepo>, char32_t);
     ~GameSession() override;
 
-    void addUser(ull) override;
+    bool addUser(ull) override;
     HandleWordStatus handleWord(ull, const std::string&) override;
     void stopGame() override;
 

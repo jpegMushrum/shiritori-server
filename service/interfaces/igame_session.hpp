@@ -17,7 +17,7 @@ class IGameSession
   public:
     virtual ~IGameSession() = default;
 
-    virtual void addUser(ull) = 0;
+    virtual bool addUser(ull) = 0;
     virtual HandleWordStatus handleWord(ull, const std::string&) = 0;
     virtual void stopGame() = 0;
     virtual void subscribe(std::function<void(WordInfo)>) = 0;

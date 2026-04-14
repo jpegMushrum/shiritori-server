@@ -40,15 +40,20 @@ void GameSession::saveStats()
     repo_->putGame(gameParts);
 }
 
-void GameSession::addUser(ull id)
+bool GameSession::addUser(ull id)
 {
     std::lock_guard lock(mu_);
+    if (players_.find({id, 0}) != players_.end())
+    {
+        return false;
+    }
 
     PlayerScore player;
     player.userId = id;
 
     players_.insert(player);
-    ctx_.playersCount++;
+    ctx_.playersCount = players_.size();
+    return true;
 }
 
 GameContext GameSession::getInfo()

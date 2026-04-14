@@ -83,7 +83,7 @@ TEST_F(InfoControllerTest, AddUserCallsServiceAndReturnsId)
 class MockGameSession : public IGameSession
 {
   public:
-    MOCK_METHOD(void, addUser, (ull), (override));
+    MOCK_METHOD(bool, addUser, (ull), (override));
     MOCK_METHOD(HandleWordStatus, handleWord, (ull, const std::string&), (override));
     MOCK_METHOD(void, stopGame, (), (override));
     MOCK_METHOD(GameContext, getInfo, (), (override));

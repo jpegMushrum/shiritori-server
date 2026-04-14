@@ -3,6 +3,7 @@
 
 #include <boost/asio.hpp>
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
 #include <thread>
@@ -200,31 +201,47 @@ class FullServerTest : public ::testing::Test
             return false;
         }
         clients_.push_back(&client);
+        clientRequestCounts_[&client] = 0;
         return true;
     }
 
     std::string sendAndReceive(TestClient& client, const std::string& request)
     {
-        if (!client.sendRequest(request))
+        int rid = ++clientRequestCounts_[&client];
+        std::string fullRequest = std::to_string(rid) + " " + request;
+        if (!client.sendRequest(fullRequest))
         {
             return "";
         }
         return client.receiveResponse();
     }
 
+    std::string extractResponse(const std::string& fullMessage)
+    {
+        size_t spacePos = fullMessage.find(' ');
+        if (spacePos != std::string::npos)
+        {
+            return fullMessage.substr(spacePos + 1);
+        }
+        return fullMessage;
+    }
+
     bool responseContains(const std::string& response, const std::string& substring)
     {
-        return response.find(substring) != std::string::npos;
+        std::string resp = extractResponse(response);
+        return resp.find(substring) != std::string::npos;
     }
 
     bool responseDoesNotContain(const std::string& response, const std::string& substring)
     {
-        return response.find(substring) == std::string::npos;
+        std::string resp = extractResponse(response);
+        return resp.find(substring) == std::string::npos;
     }
 
     bool isErrorResponse(const std::string& response)
     {
-        return response.find("Error") != std::string::npos;
+        std::string resp = extractResponse(response);
+        return resp.find("Error") != std::string::npos;
     }
 
     boost::asio::io_context io_;
@@ -237,6 +254,7 @@ class FullServerTest : public ::testing::Test
     std::shared_ptr<ITaskQueue> taskQueue_;
 
     std::vector<TestClient*> clients_;
+    std::map<TestClient*, int> clientRequestCounts_;
 };
 
 const std::string FullServerTest::TEST_HOST = "127.0.0.1";
@@ -270,12 +288,10 @@ TEST_F(FullServerTest, CanGetUserInfo)
     std::string loginResponse = sendAndReceive(client, "login Alice");
     bool gotError = isErrorResponse(loginResponse);
     EXPECT_FALSE(gotError);
-    std::string sessionId = loginResponse;
+    std::string sessionId = extractResponse(loginResponse);
 
     std::string getResponse = sendAndReceive(client, "getUserInfo " + sessionId);
     gotError = isErrorResponse(getResponse);
-
-    EXPECT_FALSE(gotError);
 
     EXPECT_FALSE(gotError);
     EXPECT_TRUE(responseContains(getResponse, "Alice"));
@@ -348,11 +364,11 @@ TEST_F(FullServerTest, SequentialRequestsFromSingleClient)
 
     std::string response1 = sendAndReceive(client, "login Player1");
     EXPECT_FALSE(isErrorResponse(response1));
-    std::string session1 = response1;
+    std::string session1 = extractResponse(response1);
 
     std::string response2 = sendAndReceive(client, "login Player2");
     EXPECT_FALSE(isErrorResponse(response2));
-    std::string session2 = response2;
+    std::string session2 = extractResponse(response2);
 
     std::string response3 = sendAndReceive(client, "getUserInfo " + session1);
     EXPECT_FALSE(isErrorResponse(response3));
@@ -454,11 +470,11 @@ TEST_F(FullServerTest, MultipleUsersWithSameName)
 
     std::string response1 = sendAndReceive(client, "login Duplicate");
     EXPECT_FALSE(isErrorResponse(response1));
-    std::string session1 = response1;
+    std::string session1 = extractResponse(response1);
 
     std::string response2 = sendAndReceive(client, "login Duplicate");
     EXPECT_FALSE(isErrorResponse(response2));
-    std::string session2 = response2;
+    std::string session2 = extractResponse(response2);
 
     std::string getResponse1 = sendAndReceive(client, "getUserInfo " + session1);
     std::string getResponse2 = sendAndReceive(client, "getUserInfo " + session2);
@@ -487,7 +503,7 @@ TEST_F(FullServerTest, CreateGameSuccessfully)
 
     std::string loginResponse = sendAndReceive(client, "login GameCreator");
     EXPECT_FALSE(isErrorResponse(loginResponse));
-    std::string sessionId = loginResponse;
+    std::string sessionId = extractResponse(loginResponse);
 
     std::string gameResponse = sendAndReceive(client, "startNewGame " + sessionId);
     EXPECT_FALSE(isErrorResponse(gameResponse));
@@ -523,8 +539,8 @@ TEST_F(FullServerTest, AddPlayerToGame)
     EXPECT_FALSE(isErrorResponse(creatorLogin));
     EXPECT_FALSE(isErrorResponse(playerLogin));
 
-    std::string creatorSession = creatorLogin;
-    std::string playerSession = playerLogin;
+    std::string creatorSession = extractResponse(creatorLogin);
+    std::string playerSession = extractResponse(playerLogin);
 
     std::string gameResponse = sendAndReceive(client, "startNewGame " + creatorSession);
     EXPECT_FALSE(isErrorResponse(gameResponse));
@@ -547,7 +563,7 @@ TEST_F(FullServerTest, GetGamesHistory)
 
     std::string loginResponse = sendAndReceive(client, "login HistoryPlayer");
     EXPECT_FALSE(isErrorResponse(loginResponse));
-    std::string sessionId = loginResponse;
+    std::string sessionId = extractResponse(loginResponse);
 
     std::string historyResponse = sendAndReceive(client, "getGamesHistory " + sessionId);
     EXPECT_FALSE(isErrorResponse(historyResponse));
@@ -562,7 +578,7 @@ TEST_F(FullServerTest, StopGameSuccessfully)
 
     std::string loginResponse = sendAndReceive(client, "login GameAdmin");
     EXPECT_FALSE(isErrorResponse(loginResponse));
-    std::string sessionId = loginResponse;
+    std::string sessionId = extractResponse(loginResponse);
 
     std::string gameResponse = sendAndReceive(client, "startNewGame " + sessionId);
     EXPECT_FALSE(isErrorResponse(gameResponse));
@@ -583,8 +599,8 @@ TEST_F(FullServerTest, GameStatisticsAfterStop)
     EXPECT_FALSE(isErrorResponse(user1Login));
     EXPECT_FALSE(isErrorResponse(user2Login));
 
-    std::string session1 = user1Login;
-    std::string session2 = user2Login;
+    std::string session1 = extractResponse(user1Login);
+    std::string session2 = extractResponse(user2Login);
 
     std::string gameResponse = sendAndReceive(client, "startNewGame " + session1);
     EXPECT_FALSE(isErrorResponse(gameResponse));
@@ -615,8 +631,8 @@ TEST_F(FullServerTest, SimultaneousRequestsFromMultipleClients)
     EXPECT_FALSE(isErrorResponse(r1));
     EXPECT_FALSE(isErrorResponse(r2));
 
-    std::string session1 = r1;
-    std::string session2 = r2;
+    std::string session1 = extractResponse(r1);
+    std::string session2 = extractResponse(r2);
 
     std::string info1 = sendAndReceive(client1, "getUserInfo " + session1);
     std::string info2 = sendAndReceive(client2, "getUserInfo " + session2);

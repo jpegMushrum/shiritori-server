@@ -51,9 +51,25 @@ class RouterTest : public ::testing::Test
         mockGamesController = std::make_shared<MockGamesController>();
 
         responseMessages.clear();
+        requestIdCounter = 0;
         auto writeCallback = [this](std::string msg) { responseMessages.push_back(msg); };
 
         router = std::make_unique<Router>(writeCallback, mockInfoController, mockGamesController);
+    }
+
+    int getNextRequestId()
+    {
+        return ++requestIdCounter;
+    }
+
+    std::string extractResponse(const std::string& fullMessage)
+    {
+        size_t spacePos = fullMessage.find(' ');
+        if (spacePos != std::string::npos)
+        {
+            return fullMessage.substr(spacePos + 1);
+        }
+        return fullMessage;
     }
 
     std::string getValidSessionId()
@@ -65,11 +81,12 @@ class RouterTest : public ::testing::Test
                        { callback(testUserId); }));
 
         responseMessages.clear();
-        router->parseAndAnswer("login testuser");
+        int rid = getNextRequestId();
+        router->parseAndAnswer(std::to_string(rid) + " login testuser");
 
         if (responseMessages.size() > 0)
         {
-            return responseMessages[0];
+            return extractResponse(responseMessages[0]);
         }
         return "";
     }
@@ -78,6 +95,7 @@ class RouterTest : public ::testing::Test
     std::shared_ptr<MockGamesController> mockGamesController;
     std::unique_ptr<Router> router;
     std::vector<std::string> responseMessages;
+    int requestIdCounter;
 };
 
 TEST_F(RouterTest, GetUserSuccessfully)
@@ -92,7 +110,8 @@ TEST_F(RouterTest, GetUserSuccessfully)
                          { callback(expectedUser); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("getUserInfo " + sessionId);
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getUserInfo " + sessionId);
 
     EXPECT_EQ(responseMessages.size(), 1);
     EXPECT_NE(responseMessages[0].find("999"), std::string::npos);
@@ -103,20 +122,22 @@ TEST_F(RouterTest, GetUserWithoutIdArgument)
 {
     EXPECT_CALL(*mockInfoController, getUserInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getUserInfo");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getUserInfo");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: getUserInfo requires session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: getUserInfo requires session ID");
 }
 
 TEST_F(RouterTest, GetUserWithInvalidId)
 {
     EXPECT_CALL(*mockInfoController, getUserInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getUserInfo invalid_id");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getUserInfo invalid_id");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, AddUserSuccessfully)
@@ -129,20 +150,22 @@ TEST_F(RouterTest, AddUserSuccessfully)
         .WillOnce(Invoke([newUserId](const std::string& nick, std::function<void(ull)> callback)
                          { callback(newUserId); }));
 
-    router->parseAndAnswer("addUser Bob");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addUser Bob");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "100");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " 100");
 }
 
 TEST_F(RouterTest, AddUserWithoutNickname)
 {
     EXPECT_CALL(*mockInfoController, addUser(_, _)).Times(0);
 
-    router->parseAndAnswer("addUser");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addUser");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: addUser requires nickname");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: addUser requires nickname");
 }
 
 TEST_F(RouterTest, GetActiveGamesWithMultipleGames)
@@ -156,7 +179,8 @@ TEST_F(RouterTest, GetActiveGamesWithMultipleGames)
         .WillOnce(Invoke([activeGames](std::function<void(std::vector<GameContext>)> callback)
                          { callback(activeGames); }));
 
-    router->parseAndAnswer("getActiveGames");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getActiveGames");
 
     EXPECT_EQ(responseMessages.size(), 1);
     EXPECT_NE(responseMessages[0].find(";"), std::string::npos);
@@ -171,10 +195,11 @@ TEST_F(RouterTest, GetActiveGamesWithNoGames)
         .WillOnce(
             Invoke([](std::function<void(std::vector<GameContext>)> callback) { callback({}); }));
 
-    router->parseAndAnswer("getActiveGames");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getActiveGames");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " ");
 }
 
 TEST_F(RouterTest, GetGameInfoSuccessfully)
@@ -187,7 +212,8 @@ TEST_F(RouterTest, GetGameInfoSuccessfully)
         .WillOnce(Invoke([gameContext](ull id, std::function<void(GameContext)> callback)
                          { callback(gameContext); }));
 
-    router->parseAndAnswer("getGameInfo 42");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGameInfo 42");
 
     EXPECT_EQ(responseMessages.size(), 1);
     EXPECT_NE(responseMessages[0].find("42"), std::string::npos);
@@ -197,20 +223,23 @@ TEST_F(RouterTest, GetGameInfoWithoutGameId)
 {
     EXPECT_CALL(*mockGamesController, getGameInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getGameInfo");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGameInfo");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: getGameInfo requires game ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: getGameInfo requires game ID");
 }
 
 TEST_F(RouterTest, GetGameInfoWithInvalidGameId)
 {
     EXPECT_CALL(*mockGamesController, getGameInfo(_, _)).Times(0);
 
-    router->parseAndAnswer("getGameInfo not_a_number");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGameInfo not_a_number");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: invalid arguments for getGameInfo");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: invalid arguments for getGameInfo");
 }
 
 TEST_F(RouterTest, StartNewGameSuccessfully)
@@ -225,7 +254,8 @@ TEST_F(RouterTest, StartNewGameSuccessfully)
                          { callback(newGame); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("startNewGame " + sessionId);
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " startNewGame " + sessionId);
 
     EXPECT_EQ(responseMessages.size(), 1);
     EXPECT_NE(responseMessages[0].find("1"), std::string::npos);
@@ -235,20 +265,23 @@ TEST_F(RouterTest, StartNewGameWithoutSessionId)
 {
     EXPECT_CALL(*mockGamesController, startNewGame(_, _)).Times(0);
 
-    router->parseAndAnswer("startNewGame");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " startNewGame");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: startNewGame requires session ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: startNewGame requires session ID");
 }
 
 TEST_F(RouterTest, StartNewGameWithInvalidSessionId)
 {
     EXPECT_CALL(*mockGamesController, startNewGame(_, _)).Times(0);
 
-    router->parseAndAnswer("startNewGame abc");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " startNewGame abc");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, StopGameSuccessfully)
@@ -260,20 +293,23 @@ TEST_F(RouterTest, StopGameSuccessfully)
     EXPECT_CALL(*mockGamesController, stopGame(gameId, userId)).Times(1);
 
     responseMessages.clear();
-    router->parseAndAnswer("stopGame " + sessionId + " 5");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " stopGame " + sessionId + " 5");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Game stopped successfully");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Game stopped successfully");
 }
 
 TEST_F(RouterTest, StopGameWithMissingGameId)
 {
     EXPECT_CALL(*mockGamesController, stopGame(_, _)).Times(0);
 
-    router->parseAndAnswer("stopGame");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " stopGame");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: stopGame requires session ID and game ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: stopGame requires session ID and game ID");
 }
 
 TEST_F(RouterTest, StopGameWithMissingGameId2)
@@ -282,10 +318,12 @@ TEST_F(RouterTest, StopGameWithMissingGameId2)
     EXPECT_CALL(*mockGamesController, stopGame(_, _)).Times(0);
 
     responseMessages.clear();
-    router->parseAndAnswer("stopGame " + sessionId);
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " stopGame " + sessionId);
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: stopGame requires session ID and game ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: stopGame requires session ID and game ID");
 }
 
 TEST_F(RouterTest, StopGameWithInvalidGameId)
@@ -294,20 +332,22 @@ TEST_F(RouterTest, StopGameWithInvalidGameId)
     EXPECT_CALL(*mockGamesController, stopGame(_, _)).Times(0);
 
     responseMessages.clear();
-    router->parseAndAnswer("stopGame " + sessionId + " invalid");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " stopGame " + sessionId + " invalid");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: invalid arguments for stopGame");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: invalid arguments for stopGame");
 }
 
 TEST_F(RouterTest, StopGameWithInvalidSessionId)
 {
     EXPECT_CALL(*mockGamesController, stopGame(_, _)).Times(0);
 
-    router->parseAndAnswer("stopGame invalid 5");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " stopGame invalid 5");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, AddPlayerToGameSuccessfully)
@@ -319,20 +359,23 @@ TEST_F(RouterTest, AddPlayerToGameSuccessfully)
     EXPECT_CALL(*mockGamesController, addPlayerToGame(userId, gameId, _)).Times(1);
 
     responseMessages.clear();
-    router->parseAndAnswer("addPlayerToGame " + sessionId + " 3");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addPlayerToGame " + sessionId + " 3");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Player added successfully");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Player added successfully");
 }
 
 TEST_F(RouterTest, AddPlayerToGameWithMissingSessionId)
 {
     EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
-    router->parseAndAnswer("addPlayerToGame");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addPlayerToGame");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: addPlayerToGame requires session ID and game ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: addPlayerToGame requires session ID and game ID");
 }
 
 TEST_F(RouterTest, AddPlayerToGameWithMissingGameId)
@@ -341,20 +384,23 @@ TEST_F(RouterTest, AddPlayerToGameWithMissingGameId)
     EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
     responseMessages.clear();
-    router->parseAndAnswer("addPlayerToGame " + sessionId);
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addPlayerToGame " + sessionId);
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: addPlayerToGame requires session ID and game ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: addPlayerToGame requires session ID and game ID");
 }
 
 TEST_F(RouterTest, AddPlayerToGameWithInvalidSessionId)
 {
     EXPECT_CALL(*mockGamesController, addPlayerToGame(_, _, _)).Times(0);
 
-    router->parseAndAnswer("addPlayerToGame invalid 3");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " addPlayerToGame invalid 3");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, HandleWordSuccessfully)
@@ -371,10 +417,12 @@ TEST_F(RouterTest, HandleWordSuccessfully)
             { callback(HandleWordStatus::OK); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 7 " + sessionId + " テスト");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 7 " + sessionId +
+                           " \u30c6\u30b9\u30c8");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "OK");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " OK");
 }
 
 TEST_F(RouterTest, HandleWordWithErrorStatus)
@@ -391,10 +439,12 @@ TEST_F(RouterTest, HandleWordWithErrorStatus)
             { callback(HandleWordStatus::WRONG_ORDER); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 7 " + sessionId + " テスト");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 7 " + sessionId +
+                           " \u30c6\u30b9\u30c8");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "WRONG_ORDER");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " WRONG_ORDER");
 }
 
 TEST_F(RouterTest, HandleWordWithGameNotFoundStatus)
@@ -411,40 +461,48 @@ TEST_F(RouterTest, HandleWordWithGameNotFoundStatus)
             { callback(HandleWordStatus::GAME_NOT_FOUND); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 999 " + sessionId + " テスト");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 999 " + sessionId +
+                           " \u30c6\u30b9\u30c8");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "GAME_NOT_FOUND");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " GAME_NOT_FOUND");
 }
 
 TEST_F(RouterTest, HandleWordWithoutGameId)
 {
     EXPECT_CALL(*mockGamesController, handleWord(_, _, _, _)).Times(0);
 
-    router->parseAndAnswer("handleWord");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: handleWord requires game ID, session ID, and word");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: handleWord requires game ID, session ID, and word");
 }
 
 TEST_F(RouterTest, HandleWordWithoutSessionId)
 {
     EXPECT_CALL(*mockGamesController, handleWord(_, _, _, _)).Times(0);
 
-    router->parseAndAnswer("handleWord 7");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 7");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: handleWord requires game ID, session ID, and word");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: handleWord requires game ID, session ID, and word");
 }
 
 TEST_F(RouterTest, HandleWordWithoutWord)
 {
     EXPECT_CALL(*mockGamesController, handleWord(_, _, _, _)).Times(0);
 
-    router->parseAndAnswer("handleWord 7 20");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 7 20");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: handleWord requires game ID, session ID, and word");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: handleWord requires game ID, session ID, and word");
 }
 
 TEST_F(RouterTest, HandleWordWithInvalidGameId)
@@ -453,20 +511,24 @@ TEST_F(RouterTest, HandleWordWithInvalidGameId)
     EXPECT_CALL(*mockGamesController, handleWord(_, _, _, _)).Times(0);
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord invalid " + sessionId + " テスト");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord invalid " + sessionId +
+                           " \u30c6\u30b9\u30c8");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: invalid arguments for handleWord");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: invalid arguments for handleWord");
 }
 
 TEST_F(RouterTest, HandleWordWithInvalidSessionId)
 {
     EXPECT_CALL(*mockGamesController, handleWord(_, _, _, _)).Times(0);
 
-    router->parseAndAnswer("handleWord 7 invalid テスト");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 7 invalid \u30c6\u30b9\u30c8");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, GetGamesHistorySuccessfully)
@@ -481,7 +543,8 @@ TEST_F(RouterTest, GetGamesHistorySuccessfully)
                          { callback({}); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("getGamesHistory " + sessionId);
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGamesHistory " + sessionId);
 
     EXPECT_EQ(responseMessages.size(), 1);
 }
@@ -490,20 +553,23 @@ TEST_F(RouterTest, GetGamesHistoryWithoutSessionId)
 {
     EXPECT_CALL(*mockInfoController, getGamesHistory(_, _)).Times(0);
 
-    router->parseAndAnswer("getGamesHistory");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGamesHistory");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: getGamesHistory requires session ID");
+    EXPECT_EQ(responseMessages[0],
+              std::to_string(rid) + " Error: getGamesHistory requires session ID");
 }
 
 TEST_F(RouterTest, GetGamesHistoryWithInvalidSessionId)
 {
     EXPECT_CALL(*mockInfoController, getGamesHistory(_, _)).Times(0);
 
-    router->parseAndAnswer("getGamesHistory invalid_session_id");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " getGamesHistory invalid_session_id");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Invalid session ID");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Invalid session ID");
 }
 
 TEST_F(RouterTest, UnknownCommand)
@@ -512,18 +578,20 @@ TEST_F(RouterTest, UnknownCommand)
     EXPECT_CALL(*mockInfoController, addUser(_, _)).Times(0);
     EXPECT_CALL(*mockGamesController, getActiveGames(_)).Times(0);
 
-    router->parseAndAnswer("unknownCommand");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " unknownCommand");
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Unknown command");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " Error: Unknown command");
 }
 
 TEST_F(RouterTest, EmptyCommand)
 {
-    router->parseAndAnswer("");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid));
 
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "Error: Unknown command");
+    EXPECT_EQ(responseMessages[0], "Error: bad args");
 }
 
 TEST_F(RouterTest, StatusToStringOK)
@@ -534,8 +602,9 @@ TEST_F(RouterTest, StatusToStringOK)
                          { cb(HandleWordStatus::OK); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "OK");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " OK");
 }
 
 TEST_F(RouterTest, StatusToStringGotError)
@@ -546,8 +615,9 @@ TEST_F(RouterTest, StatusToStringGotError)
                          { cb(HandleWordStatus::GOT_ERROR); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "GOT_ERROR");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " GOT_ERROR");
 }
 
 TEST_F(RouterTest, StatusToStringNotJapaneseWord)
@@ -558,8 +628,9 @@ TEST_F(RouterTest, StatusToStringNotJapaneseWord)
                          { cb(HandleWordStatus::NOT_JAPANESE_WORD); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "NOT_JAPANESE_WORD");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " NOT_JAPANESE_WORD");
 }
 
 TEST_F(RouterTest, StatusToStringNoFoundWord)
@@ -570,8 +641,9 @@ TEST_F(RouterTest, StatusToStringNoFoundWord)
                          { cb(HandleWordStatus::NO_FOUND_WORD); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "NO_FOUND_WORD");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " NO_FOUND_WORD");
 }
 
 TEST_F(RouterTest, StatusToStringGotEndWord)
@@ -582,8 +654,9 @@ TEST_F(RouterTest, StatusToStringGotEndWord)
                          { cb(HandleWordStatus::GOT_END_WORD); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "GOT_END_WORD");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " GOT_END_WORD");
 }
 
 TEST_F(RouterTest, StatusToStringGameNotFound)
@@ -594,8 +667,9 @@ TEST_F(RouterTest, StatusToStringGameNotFound)
                          { cb(HandleWordStatus::GAME_NOT_FOUND); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("handleWord 1 " + sessionId + " word");
-    EXPECT_EQ(responseMessages[0], "GAME_NOT_FOUND");
+    int rid = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid) + " handleWord 1 " + sessionId + " word");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid) + " GAME_NOT_FOUND");
 }
 
 TEST_F(RouterTest, MultipleCommandsInSequence)
@@ -613,11 +687,13 @@ TEST_F(RouterTest, MultipleCommandsInSequence)
             Invoke([newId](const std::string& nick, std::function<void(ull)> cb) { cb(newId); }));
 
     responseMessages.clear();
-    router->parseAndAnswer("getUserInfo " + sessionId);
+    int rid1 = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid1) + " getUserInfo " + sessionId);
     EXPECT_EQ(responseMessages.size(), 1);
 
     responseMessages.clear();
-    router->parseAndAnswer("addUser NewUser");
+    int rid2 = getNextRequestId();
+    router->parseAndAnswer(std::to_string(rid2) + " addUser NewUser");
     EXPECT_EQ(responseMessages.size(), 1);
-    EXPECT_EQ(responseMessages[0], "100");
+    EXPECT_EQ(responseMessages[0], std::to_string(rid2) + " 100");
 }

@@ -140,7 +140,9 @@ void GamesController::addPlayerToGame(ull userId, ull gameId, std::function<void
                 return;
             }
 
-            game->second->addUser(userId);
-            game->second->subscribe(update);
+            if (game->second->addUser(userId))
+            {
+                game->second->subscribe(update);
+            }
         });
 }
