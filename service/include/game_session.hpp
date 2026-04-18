@@ -13,6 +13,7 @@
 
 #include "game.hpp"
 #include "game_context.hpp"
+#include "game_update_event.hpp"
 #include "games_repo.hpp"
 #include "handle_word_status.hpp"
 #include "igame_session.hpp"
@@ -37,7 +38,7 @@ class GameSession : public IGameSession
     void stopGame() override;
 
     GameContext getInfo() override;
-    void subscribe(ull, std::function<void(WordInfo, char32_t)>) override;
+    void subscribe(ull, std::function<void(const GameUpdateEvent&)>) override;
     PlayerJoinInfo getPlayerJoinInfo() override;
 
   private:
@@ -53,6 +54,7 @@ class GameSession : public IGameSession
     std::mutex mu_;
     GameContext ctx_;
 
-    std::unordered_map<ull, std::function<void(WordInfo, char32_t)>> subscriptions_;
-    void throwUpdate(WordInfo, char32_t);
+    std::unordered_map<ull, std::function<void(const GameUpdateEvent&)>> subscriptions_;
+    void throwUpdateToUser(ull userId, const GameUpdateEvent&);
+    void throwUpdate(const GameUpdateEvent&);
 };

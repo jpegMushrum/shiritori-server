@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "game_context.hpp"
+#include "game_update_event.hpp"
 #include "games_repo.hpp"
 #include "handle_word_status.hpp"
 #include "idictionary.hpp"
@@ -22,7 +23,7 @@ class IGameSession
     virtual bool addUser(ull) = 0;
     virtual HandleWordStatus handleWord(ull, const std::string&) = 0;
     virtual void stopGame() = 0;
-    virtual void subscribe(ull, std::function<void(WordInfo, char32_t)>) = 0;
+    virtual void subscribe(ull, std::function<void(const GameUpdateEvent&)>) = 0;
 
     virtual GameContext getInfo() = 0;
     virtual PlayerJoinInfo getPlayerJoinInfo() = 0;

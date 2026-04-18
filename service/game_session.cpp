@@ -11,8 +11,10 @@ GameSession::GameSession(ull id, ull adminId, std::shared_ptr<IDictionary> dict,
 
 void GameSession::stopGame()
 {
-    std::lock_guard lock(mu_);
-    stop_ = true;
+    {
+        std::lock_guard lock(mu_);
+        stop_ = true;
+    }
 }
 
 GameSession::~GameSession()
@@ -329,6 +331,14 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
         if (lastKana == U'ん')
         {
             stop_ = true;
+            for (auto& player : players_)
+            {
+                GameUpdateEvent event;
+                event.type = GameUpdateEvent::GAME_STOPPED;
+                event.score = player;
+                throwUpdateToUser(player.userId, event);
+            }
+
             return HandleWordStatus::GOT_END_WORD;
         }
 
@@ -345,21 +355,34 @@ HandleWordStatus GameSession::handleWord(ull id, const std::string& word)
 
         words_.emplace_back(wordInfo);
 
-        throwUpdate(Mapper::WordToDto(wordInfo), lastKana);
+        GameUpdateEvent event;
+        event.type = GameUpdateEvent::WORD_PLAYED;
+        event.word = Mapper::WordToDto(wordInfo);
+        event.lastKana = lastKana;
+        throwUpdate(event);
         return HandleWordStatus::OK;
     }
 }
 
-void GameSession::subscribe(ull userId, std::function<void(WordInfo, char32_t)> update)
+void GameSession::subscribe(ull userId, std::function<void(const GameUpdateEvent&)> update)
 {
     subscriptions_[userId] = update;
 }
 
-void GameSession::throwUpdate(WordInfo wi, char32_t lastKana)
+void GameSession::throwUpdate(const GameUpdateEvent& event)
 {
     for (auto& pair : subscriptions_)
     {
-        pair.second(wi, lastKana);
+        pair.second(event);
+    }
+}
+
+void GameSession::throwUpdateToUser(ull userId, const GameUpdateEvent& event)
+{
+    auto subscriptionIt = subscriptions_.find(userId);
+    if (subscriptionIt != subscriptions_.end())
+    {
+        subscriptionIt->second(event);
     }
 }
 

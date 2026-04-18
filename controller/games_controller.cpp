@@ -130,7 +130,7 @@ void GamesController::getGameInfo(ull gameId, std::function<void(GameContext)> f
 
 void GamesController::addPlayerToGame(ull userId, ull gameId,
                                       std::function<void(PlayerJoinInfo)> onJoin,
-                                      std::function<void(WordInfo, char32_t)> onUpdate)
+                                      std::function<void(const GameUpdateEvent&)> onUpdate)
 {
     taskQueue_->addTask(
         [this, userId, gameId, onJoin, onUpdate]()

@@ -39,7 +39,7 @@ class MockGamesController : public IGamesController
     MOCK_METHOD(void, getActiveGames, (std::function<void(std::vector<GameContext>)>), (override));
     MOCK_METHOD(void, addPlayerToGame,
                 (ull, ull, std::function<void(PlayerJoinInfo)>,
-                 std::function<void(WordInfo, char32_t)>),
+                 std::function<void(const GameUpdateEvent&)>),
                 (override));
     MOCK_METHOD(void, stopGame, (ull, ull), (override));
     MOCK_METHOD(void, getGameInfo, (ull, std::function<void(GameContext)>), (override));

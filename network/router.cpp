@@ -317,12 +317,10 @@ void Router::parseAndAnswer(std::string querry)
                                                   Router::playerJoinInfoToString(joinInfo));
                     writeRId(msg);
                 },
-                [writeRId, gameId](WordInfo wi, char32_t lastKana)
+                [writeRId, gameId](const GameUpdateEvent& event)
                 {
-                    std::string lastKanaStr =
-                        boost::locale::conv::utf_to_utf<char>(std::u32string(1, lastKana));
-                    std::string msg = std::format("newWord {} {} {}", gameId, lastKanaStr,
-                                                  Router::wiToString(wi));
+                    std::string msg = std::format("gameUpdate {} {}", gameId,
+                                                  Router::gameUpdateEventToString(event));
                     writeRId(msg);
                 });
             writeRId("Player added successfully");
@@ -496,4 +494,32 @@ std::string Router::playerJoinInfoToString(const PlayerJoinInfo& info)
 
     json joinJson = {{"lastKana", lastKanaStr}, {"usedWords", wordsJsonArray}};
     return joinJson.dump();
+}
+
+std::string Router::gameUpdateEventToString(const GameUpdateEvent& event)
+{
+    json eventJson;
+
+    if (event.type == GameUpdateEvent::WORD_PLAYED)
+    {
+        const auto& word = event.word.value();
+        const auto& lastKana = event.lastKana.value();
+
+        eventJson = {
+            {"type", "wordPlayed"},
+            {"word",
+             {{"kanji", word.kanji},
+              {"readings", word.readings},
+              {"partsOfSpeach", word.partsOfSpeach},
+              {"meaning", word.meaning}}},
+            {"lastKana", boost::locale::conv::utf_to_utf<char>(std::u32string(1, lastKana))}};
+    }
+    else if (event.type == GameUpdateEvent::GAME_STOPPED)
+    {
+        const auto& score = event.score.value();
+        eventJson = {{"type", "gameStopped"},
+                     {"scores", {{"userId", score.userId}, {"score", score.score}}}};
+    }
+
+    return eventJson.dump();
 }
