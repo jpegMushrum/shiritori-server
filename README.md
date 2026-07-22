@@ -36,4 +36,5 @@ Handling several active games at once.
 5. Storing and providing profile info
 
 ## Protocol
-TODO
+
+You can look it up in [TODO](https://github.com/jpegMushrum/shiritori-server/blob/main/Protocol.md)
