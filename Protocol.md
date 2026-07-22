@@ -176,12 +176,12 @@ Example: 100 0 1 42 0 あ
 Game Update Event Types:
 
 1. **Word Played** (when a new word is accepted):
-```json
+```
 {"type":"wordPlayed","word":{"kanji":string,"readings":[]string,"partsOfSpeach":[]string,"meanings":[]string},"lastKana":string}
 ```
 
 2. **Game Stopped** (when game ends):
-```json
+```
 {"type":"gameStopped","scores":{"userId":number,"score":number}}
 ```
 
